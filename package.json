@@ -1,0 +1,17 @@
+{
+  "name": "nexure-studios-portal",
+  "version": "1.0.0",
+  "description": "Consolidated Corporate Console for Nexure Studios backed by Supabase",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.39.8"
+  },
+  "devDependencies": {
+    "vite": "^5.1.4"
+  }
+}

@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexure Studios | Client Billing Portal</title>
+  
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Secure, instant client payment portal for Nexure Studios. Enter amount and scan QR code via PhonePe UPI.">
+  <meta name="keywords" content="payment, client portal, phonepe, upi, nexure studios">
+  <meta name="author" content="Nexure Studios">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Database & Config Loader -->
+  <script type="module" src="/db.js"></script>
+
+  <style>
+    /* ----------------------------------------------------
+       1. SLEEK SLATE DARK DESIGN SYSTEM
+       ---------------------------------------------------- */
+    :root {
+      --bg-main: #09090b;
+      --bg-card: rgba(20, 20, 25, 0.7);
+      --bg-input: rgba(30, 30, 40, 0.5);
+      
+      /* Brand Logo Colors */
+      --brand-blue: #5e72e4;
+      --brand-red: #f5365c;
+      --brand-gray: #8898aa;
+      --brand-green: #2dce89;
+
+      /* Primary Gradients */
+      --primary: #5e72e4;
+      --primary-hover: #485acf;
+      --secondary: #06b6d4;
+      --success: #2dce89;
+      --danger: #f5365c;
+      --warning: #fb6340;
+      
+      --text-main: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --text-light: #71717a;
+      
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(255, 255, 255, 0.15);
+      
+      /* Typography */
+      --font-display: 'Outfit', sans-serif;
+      --font-sans: 'Inter', sans-serif;
+      
+      --transition-smooth: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      --box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+      --box-shadow-hover: 0 10px 40px rgba(94, 114, 228, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(94, 114, 228, 0.04) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.04) 0%, transparent 45%);
+    }
+
+    /* Background glow effect */
+    .glow-blob {
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(94, 114, 228, 0.08) 0%, transparent 70%);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 900px;
+      padding: 2rem 1.5rem;
+      z-index: 1;
+    }
+
+    /* Header Styling */
+    .payment-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    .logo-container {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      margin-bottom: 0.8rem;
+    }
+
+    .logo-text {
+      font-family: var(--font-display);
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      color: #ffffff;
+    }
+
+    .logo-subtitle {
+      font-size: 1.1rem;
+      font-weight: 400;
+      color: var(--brand-gray);
+      margin-left: 0.2rem;
+    }
+
+    .logo-dots {
+      display: flex;
+      gap: 0.35rem;
+      margin-top: 1rem;
+      justify-content: center;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .dot-blue { background-color: var(--brand-blue); }
+    .dot-red { background-color: var(--brand-red); }
+    .dot-gray { background-color: var(--brand-gray); }
+    .dot-green { background-color: var(--brand-green); }
+
+    /* Portal Cards Layout */
+    .portal-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 2rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      backdrop-filter: blur(16px);
+      border-radius: 28px;
+      padding: 2.5rem;
+      box-shadow: var(--box-shadow);
+      transition: var(--transition-smooth);
+    }
+
+    .portal-grid:hover {
+      box-shadow: var(--box-shadow-hover);
+      border-color: var(--border-hover);
+    }
+
+    /* Left Side: Payment Inputs */
+    .payment-info h2 {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      margin-bottom: 0.5rem;
+      background: linear-gradient(135deg, #ffffff 40%, var(--text-muted) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .payment-info p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+      line-height: 1.5;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+      text-align: left;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-light);
+      width: 18px;
+      height: 18px;
+      pointer-events: none;
+    }
+
+    .form-control {
+      width: 100%;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0.9rem 1rem 0.9rem 2.8rem;
+      color: #ffffff;
+      font-family: var(--font-sans);
+      font-size: 0.95rem;
+      outline: none;
+      transition: var(--transition-smooth);
+    }
+
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 15px rgba(94, 114, 228, 0.15);
+      background: rgba(30, 30, 45, 0.7);
+    }
+
+    .form-control::placeholder {
+      color: var(--text-light);
+    }
+
+    .amount-input-group {
+      position: relative;
+    }
+    
+    .currency-symbol {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 1.2rem;
+      color: #ffffff;
+    }
+
+    .amount-control {
+      padding-left: 2.2rem;
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    /* Right Side: QR Scanner */
+    .scanner-panel {
+      border-left: 1px solid var(--border-color);
+      padding-left: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+
+    .qr-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      max-width: 280px;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 1.5rem;
+    }
+
+    .qr-image-wrapper {
+      width: 180px;
+      height: 180px;
+      background: #ffffff;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    }
+
+    .qr-image-wrapper img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .qr-amount-badge {
+      margin-top: 1.2rem;
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .phonepe-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--brand-blue);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .phonepe-brand svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .payment-details-box {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-align: left;
+      margin-bottom: 1.5rem;
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+    }
+
+    .detail-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .detail-label {
+      color: var(--text-light);
+    }
+
+    .detail-value {
+      font-weight: 500;
+      color: var(--text-main);
+      font-family: monospace;
+    }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      border: none;
+      border-radius: 12px;
+      padding: 0.9rem 1.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      font-family: var(--font-sans);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      transition: var(--transition-smooth);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), #8996e6);
+      color: #ffffff;
+      box-shadow: 0 4px 15px rgba(94, 114, 228, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(94, 114, 228, 0.4);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      margin-top: 0.8rem;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: var(--border-hover);
+    }
+
+    .back-home {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-top: 2rem;
+      transition: var(--transition-fast);
+    }
+
+    .back-home:hover {
+      color: #ffffff;
+    }
+
+    /* Success Screen overlay */
+    .success-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #09090b;
+      border-radius: 28px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem;
+      text-align: center;
+      z-index: 10;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.4s ease;
+    }
+
+    .success-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .success-icon-wrapper {
+      width: 72px;
+      height: 72px;
+      background: rgba(45, 206, 137, 0.1);
+      border-radius: 50%;
+      color: var(--success);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      animation: pulseGreen 2s infinite;
+    }
+
+    .success-overlay h2 {
+      font-family: var(--font-display);
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      color: #ffffff;
+    }
+
+    .success-overlay p {
+      color: var(--text-muted);
+      font-size: 1rem;
+      max-width: 320px;
+      line-height: 1.5;
+      margin-bottom: 2rem;
+    }
+
+    .success-buttons {
+      width: 100%;
+      max-width: 320px;
+    }
+
+    @keyframes pulseGreen {
+      0% { box-shadow: 0 0 0 0 rgba(45, 206, 137, 0.4); }
+      70% { box-shadow: 0 0 0 15px rgba(45, 206, 137, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(45, 206, 137, 0); }
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .portal-grid {
+        grid-template-columns: 1fr;
+        padding: 2rem 1.5rem;
+      }
+      .scanner-panel {
+        border-left: none;
+        border-top: 1px solid var(--border-color);
+        padding-left: 0;
+        padding-top: 2rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="glow-blob"></div>
+
+  <div class="container">
+    
+    <!-- Portal Header -->
+    <header class="payment-header">
+      <div class="logo-container">
+        <span class="logo-text">Nexure</span>
+        <span class="logo-subtitle">Studios</span>
+      </div>
+      <div class="logo-dots">
+        <div class="dot dot-blue"></div>
+        <div class="dot dot-red"></div>
+        <div class="dot dot-gray"></div>
+        <div class="dot dot-green"></div>
+      </div>
+    </header>
+
+    <!-- Main Payment Portal -->
+    <main style="position: relative;">
+      
+      <div class="portal-grid">
+        
+        <!-- Left Column: Billing Information Form -->
+        <section class="payment-info">
+          <h2>Client Billing Console</h2>
+          <p>Complete your payment using any UPI application (PhonePe, GPay, Paytm). Verify details and scan the dynamic QR code generated.</p>
+          
+          <form id="paymentForm" onsubmit="handlePaymentSubmit(event)">
+            
+            <div class="form-group">
+              <label for="clientName">Company / Customer Name</label>
+              <div class="input-wrapper">
+                <i data-lucide="user" class="input-icon"></i>
+                <input type="text" id="clientName" class="form-control" placeholder="e.g., Acme Corp" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="billingDesc">Invoice / Project Description</label>
+              <div class="input-wrapper">
+                <i data-lucide="file-text" class="input-icon"></i>
+                <input type="text" id="billingDesc" class="form-control" placeholder="e.g., Q3 UI/UX Design Consultation" required>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="paymentAmount">Payment Amount (INR)</label>
+              <div class="input-wrapper amount-input-group">
+                <span class="currency-symbol">₹</span>
+                <input type="number" id="paymentAmount" class="form-control amount-control" placeholder="0" min="1" required oninput="updateQRFromInputs()">
+              </div>
+            </div>
+
+            <div style="margin-top: 2rem;">
+              <button type="submit" class="btn btn-primary">
+                <i data-lucide="check-circle-2"></i> Confirm & Generate Receipt
+              </button>
+            </div>
+
+          </form>
+        </section>
+
+        <!-- Right Column: PhonePe QR Scanner Card -->
+        <section class="scanner-panel">
+          <div class="qr-card">
+            <div class="qr-image-wrapper">
+              <img id="upiQR" src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=upi%3A%2F%2Fpay%3Fpa%3Dvpadmasree86-2%40okhdfcbank%26pn%3DNexure%2520Studios%26am%3D0%26cu%3DINR" alt="UPI Scan QR">
+            </div>
+            
+            <div class="qr-amount-badge" id="qrAmountDisplay">₹0.00</div>
+            
+            <div class="phonepe-brand">
+              <i data-lucide="smartphone"></i>
+              <span>PhonePe Payment Scanner</span>
+            </div>
+          </div>
+
+          <div class="payment-details-box">
+            <div class="detail-row">
+              <span class="detail-label">Merchant Name:</span>
+              <span class="detail-value" style="font-family: var(--font-display);">Nexure Studios</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Phone Number:</span>
+              <span class="detail-value">8309715229</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">UPI ID:</span>
+              <span class="detail-value" style="font-size:0.75rem;">vpadmasree86-2@okhdfcbank</span>
+            </div>
+          </div>
+
+          <!-- Deep link for Mobile browsers -->
+          <a id="upiDeepLink" href="upi://pay?pa=vpadmasree86-2@okhdfcbank&pn=Nexure%20Studios&am=0&cu=INR" class="btn btn-secondary">
+            <i data-lucide="external-link"></i> Pay Directly via UPI App
+          </a>
+        </section>
+
+      </div>
+
+      <!-- Success & Receipt overlay screen -->
+      <div class="success-overlay" id="successOverlay">
+        <div class="success-icon-wrapper">
+          <i data-lucide="badge-check" style="width: 44px; height: 44px; stroke-width: 1.5;"></i>
+        </div>
+        <h2>Payment Logged!</h2>
+        <p>Your payment confirmation has been transmitted directly to Nexure Studios. You can now download your receipt.</p>
+        
+        <div class="success-buttons">
+          <button class="btn btn-primary" onclick="downloadReceiptImage()">
+            <i data-lucide="download"></i> Download Receipt (Image)
+          </button>
+          <button class="btn btn-secondary" onclick="printPageReceipt()">
+            <i data-lucide="printer"></i> Print Receipt (PDF)
+          </button>
+          <button class="btn btn-secondary" onclick="resetPaymentDesk()" style="margin-top: 1.5rem; background: transparent; border: none; color: var(--text-light); text-decoration: underline;">
+            Submit Another Payment
+          </button>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Back to public homepage link -->
+    <div style="text-align: center;">
+      <a href="index.html" class="back-home">
+        <i data-lucide="arrow-left" style="width: 16px; height: 16px;"></i> Back to Corporate Console
+      </a>
+    </div>
+
+  </div>
+
+  <script>
+    // Initialize icons
+    lucide.createIcons();
+
+    const MERCHANT_UPI = "vpadmasree86-2@okhdfcbank";
+    const MERCHANT_NAME = "Nexure Studios";
+
+    let activeTransaction = null;
+
+    // Trigger QR Code refresh on input
+    function updateQRFromInputs() {
+      const amountVal = parseFloat(document.getElementById('paymentAmount').value) || 0;
+      const descVal = document.getElementById('billingDesc').value.trim() || "Payment";
+
+      // Dynamically display amount
+      document.getElementById('qrAmountDisplay').textContent = `₹${amountVal.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+      // Build UPI deep-link query string
+      const upiUrl = `upi://pay?pa=${MERCHANT_UPI}&pn=${encodeURIComponent(MERCHANT_NAME)}&am=${amountVal}&cu=INR&tn=${encodeURIComponent(descVal)}`;
+      
+      // Update dynamic link href
+      document.getElementById('upiDeepLink').href = upiUrl;
+
+      // Update QR Code image source (using qrserver.com)
+      const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=8&data=${encodeURIComponent(upiUrl)}`;
+      document.getElementById('upiQR').src = qrApiUrl;
+    }
+
+    // Handles form submission, logs payment to database and shows success modal
+    async function handlePaymentSubmit(e) {
+      e.preventDefault();
+      if (!db) return;
+
+      const customerName = document.getElementById('clientName').value.trim();
+      const description = document.getElementById('billingDesc').value.trim();
+      const amount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+
+      const paymentId = `PAY-${Date.now()}`;
+      const timestamp = new Date().toISOString();
+
+      activeTransaction = {
+        id: paymentId,
+        customerName,
+        description,
+        amount: amount.toString(),
+        timestamp,
+        status: "Success" // Confirmed client-side
+      };
+
+      try {
+        // Save transaction to DB
+        await db.collection('payments').doc(paymentId).set(activeTransaction);
+        
+        // Show success screen
+        document.getElementById('successOverlay').classList.add('active');
+      } catch (err) {
+        console.error("Database connection failure, logging payment locally: ", err);
+        // Fail-safe: Save directly to localStorage even if database calls crashed
+        try {
+          const colDataStr = localStorage.getItem("nexure_db_payments") || "{}";
+          const colData = JSON.parse(colDataStr);
+          colData[paymentId] = activeTransaction;
+          localStorage.setItem("nexure_db_payments", JSON.stringify(colData));
+          
+          document.getElementById('successOverlay').classList.add('active');
+        } catch (storageErr) {
+          alert("Unable to register payment. Check browser storage permissions.");
+        }
+      }
+    }
+
+    // Canvas drawing function to generate and download a premium receipt image
+    function downloadReceiptImage() {
+      if (!activeTransaction) return;
+
+      const canvas = document.createElement('canvas');
+      canvas.width = 600;
+      canvas.height = 760;
+      const ctx = canvas.getContext('2d');
+
+      // --- Draw Receipt styling ---
+
+      // 1. Dark/Anthracite Sleek Background
+      ctx.fillStyle = "#121214";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Card Inner Glow Border
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(20, 20, canvas.width - 40, canvas.height - 40);
+
+      // Gradient Header Area
+      const grad = ctx.createLinearGradient(0, 0, canvas.width, 0);
+      grad.addColorStop(0, "#5e72e4");
+      grad.addColorStop(1, "#06b6d4");
+      ctx.fillStyle = grad;
+      ctx.fillRect(20, 20, canvas.width - 40, 10); // Thin gradient stripe at very top
+
+      // 2. Logo & Branding
+      ctx.fillStyle = "#ffffff";
+      ctx.font = "bold 26px Outfit, sans-serif";
+      ctx.fillText("Nexure", 45, 75);
+
+      ctx.fillStyle = "#8898aa";
+      ctx.font = "300 24px Outfit, sans-serif";
+      ctx.fillText("Studios", 135, 75);
+
+      // Logo brand circles
+      const dots = [
+        { c: "#5e72e4", x: 235 },
+        { c: "#f5365c", x: 255 },
+        { c: "#8898aa", x: 275 },
+        { c: "#2dce89", x: 295 }
+      ];
+      dots.forEach(d => {
+        ctx.fillStyle = d.c;
+        ctx.beginPath();
+        ctx.arc(d.x, 68, 5, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      // Receipt Label
+      ctx.fillStyle = "#a1a1aa";
+      ctx.font = "500 11px Inter, sans-serif";
+      ctx.fillText("OFFICIAL PAYMENT RECEIPT", 45, 115);
+
+      // Divider Line
+      ctx.strokeStyle = "rgba(255,255,255,0.06)";
+      ctx.beginPath();
+      ctx.moveTo(40, 135);
+      ctx.lineTo(canvas.width - 40, 135);
+      ctx.stroke();
+
+      // 3. Left / Right details grid
+      const gridY = 175;
+      const step = 45;
+
+      const rows = [
+        { label: "RECEIPT ID", val: activeTransaction.id },
+        { label: "TIMESTAMP", val: new Date(activeTransaction.timestamp).toLocaleString() },
+        { label: "CUSTOMER", val: activeTransaction.customerName },
+        { label: "DESCRIPTION", val: activeTransaction.description },
+        { label: "UPI DESK ID", val: MERCHANT_UPI },
+        { label: "PAYMENT METHOD", val: "PhonePe UPI Gateway" },
+      ];
+
+      rows.forEach((r, idx) => {
+        const currY = gridY + (idx * step);
+        
+        // Label
+        ctx.fillStyle = "#71717a";
+        ctx.font = "bold 11px Inter, sans-serif";
+        ctx.fillText(r.label, 45, currY);
+
+        // Value
+        ctx.fillStyle = "#f4f4f5";
+        ctx.font = "500 14px Inter, sans-serif";
+        // Handle long text wrapping for description
+        if (r.label === "DESCRIPTION" && r.val.length > 34) {
+          ctx.fillText(r.val.substring(0, 31) + "...", 210, currY);
+        } else {
+          ctx.fillText(r.val, 210, currY);
+        }
+      });
+
+      // Divider Line
+      ctx.strokeStyle = "rgba(255,255,255,0.06)";
+      ctx.beginPath();
+      ctx.moveTo(40, gridY + (rows.length * step) + 5);
+      ctx.lineTo(canvas.width - 40, gridY + (rows.length * step) + 5);
+      ctx.stroke();
+
+      // 4. Large Total Amount block
+      const totalY = gridY + (rows.length * step) + 60;
+      
+      ctx.fillStyle = "#2dce89";
+      ctx.font = "bold 38px Outfit, sans-serif";
+      const amtStr = `₹${parseFloat(activeTransaction.amount).toLocaleString('en-IN', {minimumFractionDigits: 2})}`;
+      ctx.fillText(amtStr, 45, totalY);
+
+      ctx.fillStyle = "#71717a";
+      ctx.font = "bold 11px Inter, sans-serif";
+      ctx.fillText("GRAND TOTAL PAID IN FULL", 45, totalY + 22);
+
+      // PAID Badge Seal
+      ctx.strokeStyle = "#2dce89";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(canvas.width - 170, totalY - 32, 125, 45);
+      
+      ctx.fillStyle = "#2dce89";
+      ctx.font = "bold 18px Outfit, sans-serif";
+      ctx.fillText("✓ VERIFIED", canvas.width - 158, totalY - 3);
+
+      // 5. Barcode graphic for design credibility
+      const codeY = totalY + 80;
+      ctx.strokeStyle = "rgba(255,255,255,0.2)";
+      ctx.lineWidth = 1;
+      
+      // Draw simulated barcode lines
+      let currX = 45;
+      for (let i = 0; i < 48; i++) {
+        const thickness = (i % 3 === 0) ? 3 : ((i % 5 === 0) ? 1 : 2);
+        ctx.fillStyle = `rgba(255,255,255, ${Math.random() * 0.4 + 0.3})`;
+        ctx.fillRect(currX, codeY, thickness, 35);
+        currX += thickness + (i % 2 === 0 ? 2 : 3);
+      }
+
+      ctx.fillStyle = "#71717a";
+      ctx.font = "9px monospace";
+      ctx.fillText(activeTransaction.id, 45, codeY + 50);
+
+      // Footer disclaimer
+      ctx.fillStyle = "#71717a";
+      ctx.font = "300 11px Inter, sans-serif";
+      ctx.fillText("This is a digitally generated copy of the invoice ledger. Nexure Studios Bangalore.", 45, canvas.height - 45);
+
+      // Trigger download
+      const link = document.createElement('a');
+      link.download = `Nexure_Receipt_${activeTransaction.id}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    // Native browser print triggering (supports print styling or saving to PDF)
+    function printPageReceipt() {
+      window.print();
+    }
+
+    function resetPaymentDesk() {
+      document.getElementById('paymentForm').reset();
+      document.getElementById('successOverlay').classList.remove('active');
+      activeTransaction = null;
+      updateQRFromInputs();
+    }
+  </script>
+</body>
+</html>

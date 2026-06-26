@@ -13,12 +13,8 @@
   <!-- Lucide Icons CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
-  <!-- Firebase SDK Compat -->
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
-
-  <!-- Unified DB Adapter -->
-  <script src="db.js"></script>
+  <!-- Unified DB Adapter (Supabase) -->
+  <script type="module" src="/db.js"></script>
 
   <style>
     /* ----------------------------------------------------
@@ -1438,6 +1434,17 @@
             <div class="success-alert" id="empProfileSuccessAlert">Changes saved successfully in database.</div>
             <form id="empProfileForm" onsubmit="handleEmpProfileUpdate(event)">
               <div class="profile-form-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 1.5rem;">
+                
+                <!-- Avatar File Input Block -->
+                <div class="input-group" style="grid-column: span 2; display: flex; align-items: center; gap: 1.5rem; background: rgba(255,255,255,0.02); padding: 1rem; border-radius: 8px; border: 1px dashed var(--border-color);">
+                  <img id="empProfileAvatarPreview" src="" alt="Avatar Preview" style="width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary);">
+                  <div style="display: flex; flex-direction: column; gap: 0.5rem; flex: 1;">
+                    <label for="empProfileAvatarInput" style="margin-bottom: 0;">Change Avatar Picture</label>
+                    <input type="file" id="empProfileAvatarInput" accept="image/*" style="font-size: 0.85rem; color: var(--text-muted);">
+                    <span style="font-size: 0.75rem; color: var(--text-light);">Supported formats: JPG, PNG, WebP (Max 2MB)</span>
+                  </div>
+                </div>
+
                 <div class="input-group" style="grid-column: span 2;">
                   <label>ID Tag (Read Only)</label>
                   <input type="text" id="empProfileFieldId" class="form-control" readonly style="background-color: var(--border-color); color: var(--text-light); cursor: not-allowed; padding-left: 1rem;">
@@ -1745,56 +1752,21 @@
         <!-- Owner Tab 7: Settings -->
         <section class="portal-tab-panel" id="tab-owner-settings">
           <h1 class="page-title">Configuration Settings</h1>
-          <p class="page-desc">Manage system database connection status and factory metadata directories.</p>
+          <p class="page-desc">Inspect active cloud database connection status and factory wipes.</p>
           
-          <!-- Cloud Database Sync Card -->
+          <!-- Cloud Database Sync Card (Supabase) -->
           <div class="panel-card" style="max-width: 600px;">
-            <h3 class="card-title"><i data-lucide="database" style="color: var(--primary);"></i> Cloud Database Sync Setup</h3>
-            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5;">
-              Currently active database type: <strong id="dbTypeIndicator" style="color: var(--success); font-family: monospace;">Local Storage</strong>.
-              Provide your Firebase project details to connect this dashboard to cloud storage to prevent any data loss on Vercel.
-            </p>
-            <form id="dbSetupForm" onsubmit="handleDbSetup(event)">
-              <div class="input-group">
-                <label for="dbSetupType">Database Type</label>
-                <select id="dbSetupType" class="form-control" style="padding-left: 1rem;" onchange="toggleDbFields(this.value)">
-                  <option value="local">Local Storage Mode (Browser Cache)</option>
-                  <option value="firebase">Firebase Firestore Cloud</option>
-                </select>
+            <h3 class="card-title"><i data-lucide="database" style="color: var(--primary);"></i> Supabase Cloud Database Status</h3>
+            <div style="font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.6;">
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem;">
+                <span>Connection Status:</span>
+                <span id="dbTypeIndicator" class="badge-status completed" style="font-size: 0.8rem; padding: 0.2rem 0.6rem;">Connected to Supabase</span>
               </div>
-              
-              <div id="firebaseConfigFields" style="display: none; margin-top: 1rem;">
-                <div class="input-group">
-                  <label for="dbApiKey">API Key</label>
-                  <input type="text" id="dbApiKey" class="form-control" style="padding-left: 1rem;" placeholder="AIzaSy...">
-                </div>
-                <div class="input-group">
-                  <label for="dbAuthDomain">Auth Domain</label>
-                  <input type="text" id="dbAuthDomain" class="form-control" style="padding-left: 1rem;" placeholder="project-id.firebaseapp.com">
-                </div>
-                <div class="input-group">
-                  <label for="dbProjectId">Project ID</label>
-                  <input type="text" id="dbProjectId" class="form-control" style="padding-left: 1rem;" placeholder="project-id">
-                </div>
-                <div class="input-group">
-                  <label for="dbStorageBucket">Storage Bucket</label>
-                  <input type="text" id="dbStorageBucket" class="form-control" style="padding-left: 1rem;" placeholder="project-id.appspot.com">
-                </div>
-                <div class="input-group">
-                  <label for="dbMessagingSenderId">Messaging Sender ID</label>
-                  <input type="text" id="dbMessagingSenderId" class="form-control" style="padding-left: 1rem;" placeholder="1234567890">
-                </div>
-                <div class="input-group">
-                  <label for="dbAppId">App ID</label>
-                  <input type="text" id="dbAppId" class="form-control" style="padding-left: 1rem;" placeholder="1:1234567890:web:abcdef">
-                </div>
+              <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+                <span style="color: var(--text-muted);">Endpoint URL:</span>
+                <code id="supabaseUrlVal" style="background: rgba(255,255,255,0.05); padding: 0.4rem; border-radius: 4px; font-size: 0.8rem; word-break: break-all;">Loading...</code>
               </div>
-              
-              <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
-                <button type="submit" class="btn btn-primary" style="width: auto; padding: 0.6rem 2rem;">Save & Connect</button>
-                <button type="button" class="btn btn-secondary" onclick="clearDbSetup()" id="clearDbBtn" style="width: auto; padding: 0.6rem 1.5rem; display: none;">Disconnect Cloud</button>
-              </div>
-            </form>
+            </div>
           </div>
 
           <!-- Factory Wipe Card -->
@@ -2136,25 +2108,28 @@
       lucide.createIcons();
       startLiveClock();
 
-      // Check sessionStorage and route
-      checkAuthentication();
-      loadSavedDbConfig();
+      // Listen to Supabase Auth state changes reactively
+      supabase.auth.onAuthStateChange((event, session) => {
+        console.log("Supabase Auth State Change:", event);
+        checkAuthentication();
+      });
 
       // Show DB status alert in login screen if local mode
       const alertDiv = document.getElementById('loginFirebaseAlert');
-      if (alertDiv) {
-        if (window.NexureDB && window.NexureDB.getDbType() === "local") {
-          alertDiv.className = "fb-warning-banner";
-          alertDiv.style.backgroundColor = "rgba(94, 114, 228, 0.08)";
-          alertDiv.style.borderColor = "rgba(94, 114, 228, 0.2)";
-          alertDiv.style.color = "var(--primary)";
-          alertDiv.querySelector('i').setAttribute('data-lucide', 'info');
-          alertDiv.querySelector('span').textContent = "Running in Local Storage Mode.";
-          alertDiv.style.display = 'flex';
-          lucide.createIcons();
-        } else {
-          alertDiv.style.display = 'none';
-        }
+      if (alertDiv) alertDiv.style.display = 'none';
+
+      // Setup file preview listener for profile avatar changes
+      const avatarInput = document.getElementById('empProfileAvatarInput');
+      if (avatarInput) {
+        avatarInput.addEventListener('change', function() {
+          if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+              document.getElementById('empProfileAvatarPreview').src = e.target.result;
+            }
+            reader.readAsDataURL(this.files[0]);
+          }
+        });
       }
     });
 
@@ -2197,52 +2172,48 @@
 
     async function handleLoginSubmit(e) {
       e.preventDefault();
-      if (!db) return;
+      const errorDiv = document.getElementById('loginError');
+      errorDiv.style.display = 'none';
 
       const userVal = document.getElementById('loginId').value.trim();
       const passVal = document.getElementById('loginPassword').value;
-      const errorDiv = document.getElementById('loginError');
 
       try {
-        if (activeLoginRole === 'employee') {
-          // Employee Auth
-          const empDoc = await db.collection('employees').doc(userVal).get();
-          if (empDoc.exists && empDoc.data().password === passVal) {
-            const empData = empDoc.data();
-            sessionStorage.setItem('nexure_current_employee', JSON.stringify(empData));
-            errorDiv.style.display = 'none';
-            document.getElementById('loginForm').reset();
-            checkAuthentication();
-          } else {
+        let email = userVal;
+
+        // If login ID is not an email (e.g., 9696 or EMP-101), look up email from profiles table
+        if (!userVal.includes('@')) {
+          const { data: profile, error: dbErr } = await supabase
+            .from('employees')
+            .select('email')
+            .eq('employee_id', userVal)
+            .maybeSingle();
+
+          if (dbErr) throw dbErr;
+          if (!profile) {
+            errorDiv.textContent = "Invalid Credentials (ID not found).";
             errorDiv.style.display = 'block';
-            errorDiv.textContent = "Invalid Employee ID or Password.";
+            return;
           }
-        } else {
-          // Owner Auth
-          const ownerDoc = await db.collection('owners').doc(userVal).get();
-          if (ownerDoc.exists && ownerDoc.data().password === passVal) {
-            const ownerData = ownerDoc.data();
-            sessionStorage.setItem('nexure_current_owner', JSON.stringify(ownerData));
-            errorDiv.style.display = 'none';
-            document.getElementById('loginForm').reset();
-            checkAuthentication();
-          } else {
-            // Check fallback for default master seeder in case database is not populated yet
-            if (userVal === "9696" && passVal === "9696") {
-              const defaultOwner = { id: "9696", username: "9696", password: "9696", name: "Master Owner" };
-              sessionStorage.setItem('nexure_current_owner', JSON.stringify(defaultOwner));
-              errorDiv.style.display = 'none';
-              document.getElementById('loginForm').reset();
-              checkAuthentication();
-            } else {
-              errorDiv.style.display = 'block';
-              errorDiv.textContent = "Invalid Owner Credentials.";
-            }
-          }
+          email = profile.email;
         }
+
+        // Authenticate with Supabase Auth
+        const { error: authErr } = await supabase.auth.signInWithPassword({
+          email: email,
+          password: passVal
+        });
+
+        if (authErr) {
+          errorDiv.textContent = authErr.message;
+          errorDiv.style.display = 'block';
+          return;
+        }
+
+        document.getElementById('loginForm').reset();
       } catch (err) {
-        console.error("Login verification failure: ", err);
-        errorDiv.textContent = "Database error. Confirm connections.";
+        console.error("Login verification failure:", err);
+        errorDiv.textContent = "Authentication system error.";
         errorDiv.style.display = 'block';
       }
     }
@@ -2250,75 +2221,109 @@
     // ----------------------------------------------------
     // AUTH ROUTING & SCREEN INITIALIZATION
     // ----------------------------------------------------
-    function checkAuthentication() {
-      const loggedOwner = sessionStorage.getItem('nexure_current_owner');
-      const loggedEmployee = sessionStorage.getItem('nexure_current_employee');
+    async function checkAuthentication() {
+      const { data: { session } } = await supabase.auth.getSession();
 
       // Unsubscribe all active listeners first
       unsubscribeAllListeners();
 
-      if (loggedOwner) {
-        currentOwner = JSON.parse(loggedOwner);
-        currentEmployee = null;
+      const loginModule = document.getElementById('loginModule');
+      const portalWorkspace = document.getElementById('portalWorkspace');
 
-        // Show Dashboard, Hide Login
-        document.getElementById('loginModule').style.display = 'none';
-        document.getElementById('portalWorkspace').style.display = 'flex';
+      if (session) {
+        try {
+          // Fetch employee/owner profile details
+          const { data: profile, error: dbErr } = await supabase
+            .from('employees')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle();
 
-        // Setup UI Header
-        document.getElementById('activeBadgeRole').textContent = "Owner Console";
-        document.getElementById('navProfileName').textContent = currentOwner.name;
-        document.getElementById('navProfileRole').textContent = "Administrator";
-        document.getElementById('navProfileAvatar').src = `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(currentOwner.name)}`;
+          if (dbErr) throw dbErr;
 
-        // Load Sidebar for Owner
-        loadOwnerSidebar();
+          if (!profile) {
+            await supabase.auth.signOut();
+            showLoginError("Account profile registry not found.");
+            return;
+          }
 
-        // Load Owner Views
-        initializeOwnerDashboard();
-        
-      } else if (loggedEmployee) {
-        currentEmployee = JSON.parse(loggedEmployee);
-        currentOwner = null;
+          if (profile.is_suspended) {
+            await supabase.auth.signOut();
+            showLoginError("Your developer account has been suspended.");
+            return;
+          }
 
-        // Show Dashboard, Hide Login
-        document.getElementById('loginModule').style.display = 'none';
-        document.getElementById('portalWorkspace').style.display = 'flex';
+          // Map snake_case to camelCase
+          const jsProfile = {
+            id: profile.id,
+            employeeId: profile.employee_id,
+            name: profile.name,
+            email: profile.email,
+            phone: profile.phone,
+            role: profile.role,
+            roleTitle: profile.role_title,
+            password: profile.password,
+            isSuspended: profile.is_suspended,
+            avatar: profile.avatar_url
+          };
 
-        // Setup UI Header
-        document.getElementById('activeBadgeRole').textContent = "Employee Portal";
-        document.getElementById('navProfileName').textContent = currentEmployee.name;
-        document.getElementById('navProfileRole').textContent = currentEmployee.role || "Developer";
-        document.getElementById('navProfileAvatar').src = currentEmployee.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(currentEmployee.name)}`;
+          if (jsProfile.role === 'admin') {
+            currentOwner = jsProfile;
+            currentEmployee = null;
 
-        // Load Sidebar for Employee
-        loadEmployeeSidebar();
+            loginModule.style.display = 'none';
+            portalWorkspace.style.display = 'flex';
 
-        // Show Employee tab
-        employeeSwitchTab('dashboard');
+            document.getElementById('activeBadgeRole').textContent = "Owner Console";
+            document.getElementById('navProfileName').textContent = currentOwner.name;
+            document.getElementById('navProfileRole').textContent = currentOwner.roleTitle || "Administrator";
+            document.getElementById('navProfileAvatar').src = currentOwner.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(currentOwner.name)}`;
 
+            loadOwnerSidebar();
+            initializeOwnerDashboard();
+          } else {
+            currentEmployee = jsProfile;
+            currentOwner = null;
+
+            loginModule.style.display = 'none';
+            portalWorkspace.style.display = 'flex';
+
+            document.getElementById('activeBadgeRole').textContent = "Employee Portal";
+            document.getElementById('navProfileName').textContent = currentEmployee.name;
+            document.getElementById('navProfileRole').textContent = currentEmployee.roleTitle || "Developer";
+            document.getElementById('navProfileAvatar').src = currentEmployee.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(currentEmployee.name)}`;
+
+            loadEmployeeSidebar();
+            employeeSwitchTab('dashboard');
+          }
+        } catch (err) {
+          console.error("Auth routing failure:", err);
+          showLoginError("Database synchronization failure.");
+        }
       } else {
-        // Not logged in: show login screen
-        document.getElementById('loginModule').style.display = 'flex';
-        document.getElementById('portalWorkspace').style.display = 'none';
-        
+        loginModule.style.display = 'flex';
+        portalWorkspace.style.display = 'none';
+
         currentEmployee = null;
         currentOwner = null;
-        sessionStorage.clear();
+
+        // Clean intervals
+        clearInterval(elapsedTimerInterval);
+        clearInterval(activeSessionTimer);
       }
       lucide.createIcons();
     }
 
-    function handleLogout() {
-      sessionStorage.clear();
-      currentEmployee = null;
-      currentOwner = null;
+    function showLoginError(msg) {
+      const errorDiv = document.getElementById('loginError');
+      if (errorDiv) {
+        errorDiv.textContent = msg;
+        errorDiv.style.display = 'block';
+      }
+    }
 
-      // Clean running intervals
-      clearInterval(elapsedTimerInterval);
-      clearInterval(activeSessionTimer);
-
-      checkAuthentication();
+    async function handleLogout() {
+      await supabase.auth.signOut();
     }
 
     function unsubscribeAllListeners() {
@@ -2417,7 +2422,6 @@
       document.querySelectorAll('.portal-tab-panel').forEach(panel => panel.classList.remove('active'));
       document.getElementById(`tab-owner-${tabId}`).classList.add('active');
 
-      // Trigger respective loaders
       if (tabId === 'settings') {
         loadSavedDbConfig();
       }
@@ -2437,7 +2441,6 @@
     function closeModal(id) {
       document.getElementById(id).classList.remove('active');
     }
-
 
     // ----------------------------------------------------
     // EMPLOYEE CONSOLE SUITE LOGIC
@@ -2660,42 +2663,102 @@
 
     function loadEmpProfileData() {
       if (!currentEmployee) return;
-      document.getElementById('empProfileFieldId').value = currentEmployee.id;
+      document.getElementById('empProfileFieldId').value = currentEmployee.employeeId;
       document.getElementById('empProfileFieldName').value = currentEmployee.name;
       document.getElementById('empProfileFieldEmail').value = currentEmployee.email;
       document.getElementById('empProfileFieldPhone').value = currentEmployee.phone || '';
       document.getElementById('empProfileFieldPassword').value = currentEmployee.password;
+      document.getElementById('empProfileAvatarPreview').src = currentEmployee.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(currentEmployee.name)}`;
     }
 
     async function handleEmpProfileUpdate(e) {
       e.preventDefault();
-      if (!currentEmployee || !db) return;
+      if (!currentEmployee) return;
 
       const name = document.getElementById('empProfileFieldName').value.trim();
       const email = document.getElementById('empProfileFieldEmail').value.trim();
       const phone = document.getElementById('empProfileFieldPhone').value.trim();
       const password = document.getElementById('empProfileFieldPassword').value;
+      const avatarInput = document.getElementById('empProfileAvatarInput');
 
       try {
-        const docRef = db.collection('employees').doc(currentEmployee.id);
-        await docRef.update({ name, email, phone, password });
-        
-        const updatedDoc = await docRef.get();
-        currentEmployee = updatedDoc.data();
-        sessionStorage.setItem('nexure_current_employee', JSON.stringify(currentEmployee));
-        
-        // Sync UI Header details
+        let avatarUrl = currentEmployee.avatar;
+
+        // If user selected a new profile picture, upload it to Supabase Storage
+        if (avatarInput.files && avatarInput.files[0]) {
+          const file = avatarInput.files[0];
+          if (file.size > 2 * 1024 * 1024) {
+            alert("Avatar file size must be less than 2MB.");
+            return;
+          }
+          const filePath = `${currentEmployee.id}/${Date.now()}_${file.name}`;
+          const { data: uploadData, error: uploadErr } = await supabase.storage
+            .from('avatars')
+            .upload(filePath, file, { upsert: true });
+
+          if (uploadErr) throw uploadErr;
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(filePath);
+
+          avatarUrl = publicUrl;
+        }
+
+        // Update auth details via client SDK
+        const { error: authErr } = await supabase.auth.updateUser({
+          email: email,
+          password: password,
+          data: { name: name }
+        });
+        if (authErr) throw authErr;
+
+        // Update profile record in employees database table
+        const { error: dbErr } = await supabase
+          .from('employees')
+          .update({
+            name,
+            email,
+            phone,
+            password,
+            avatar_url: avatarUrl
+          })
+          .eq('id', currentEmployee.id);
+
+        if (dbErr) throw dbErr;
+
+        // Force-refresh session state
+        const { data: updatedProfile } = await supabase
+          .from('employees')
+          .select('*')
+          .eq('id', currentEmployee.id)
+          .maybeSingle();
+
+        if (updatedProfile) {
+          currentEmployee = {
+            id: updatedProfile.id,
+            employeeId: updatedProfile.employee_id,
+            name: updatedProfile.name,
+            email: updatedProfile.email,
+            phone: updatedProfile.phone,
+            role: updatedProfile.role,
+            roleTitle: updatedProfile.role_title,
+            password: updatedProfile.password,
+            isSuspended: updatedProfile.is_suspended,
+            avatar: updatedProfile.avatar_url
+          };
+        }
+
         checkAuthentication();
 
         const alertDiv = document.getElementById('empProfileSuccessAlert');
         alertDiv.style.display = 'block';
         setTimeout(() => alertDiv.style.display = 'none', 4000);
       } catch (err) {
-        console.error(err);
-        alert("Failed to save changes.");
+        console.error("Profile update failure:", err);
+        alert("Failed to save changes: " + err.message);
       }
     }
-
 
     // ----------------------------------------------------
     // OWNER CONSOLE SUITE LOGIC
@@ -2761,7 +2824,7 @@
                 <img class="shift-user-avatar" src="${avatarUrl}" alt="Avatar">
                 <div>
                   <div class="shift-user-name">${emp.name}</div>
-                  <div class="shift-user-id">${empId} • ${emp.role || 'Developer'}</div>
+                  <div class="shift-user-id">${emp.employeeId || empId} • ${emp.roleTitle || 'Developer'}</div>
                 </div>
               </div>
               <div class="shift-duration-badge">
@@ -2798,6 +2861,682 @@
           `${mins.toString().padStart(2, '0')}m ` +
           `${secs.toString().padStart(2, '0')}s`;
       });
+    }
+
+    // ----------------------------------------------------
+    // EMPLOYEE CRUD REGISTRY LOGIC
+    // ----------------------------------------------------
+    function initializeEmployeesRoster() {
+      const tbody = document.getElementById('ownerEmployeesTableBody');
+      const addAssignedDropdown = document.getElementById('addProjAssigned');
+      const editAssignedDropdown = document.getElementById('editProjAssigned');
+
+      employeesRosterUnsub = db.collection('employees').onSnapshot(snap => {
+        cachedEmployees = [];
+        tbody.innerHTML = '';
+        
+        let dropdownHtml = '<option value="">-- Choose Developer --</option>';
+        if (snap.empty) {
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted);">No employees registered yet.</td></tr>';
+          addAssignedDropdown.innerHTML = dropdownHtml;
+          editAssignedDropdown.innerHTML = dropdownHtml;
+          return;
+        }
+
+        snap.forEach(doc => {
+          const emp = doc.data();
+          cachedEmployees.push(emp);
+          dropdownHtml += `<option value="${emp.id}">${emp.name} (${emp.employeeId})</option>`;
+          
+          const avatarUrl = emp.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${emp.name}`;
+          
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><img src="${avatarUrl}" alt="Avatar" style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;"></td>
+            <td><strong>${emp.employeeId}</strong></td>
+            <td>${emp.name}</td>
+            <td>${emp.roleTitle || 'Developer'}</td>
+            <td>${emp.email}</td>
+            <td>${emp.phone || '-'}</td>
+            <td><code>${emp.password}</code></td>
+            <td>
+              <div class="action-btn-group">
+                <button class="action-icon-btn edit-btn" onclick="openEditEmployeeModal('${emp.id}')" title="Edit Profile">
+                  <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
+                </button>
+                <button class="action-icon-btn delete-btn" onclick="deleteEmployee('${emp.id}')" title="Delete Profile">
+                  <i data-lucide="trash" style="width: 14px; height: 14px;"></i>
+                </button>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+        
+        addAssignedDropdown.innerHTML = dropdownHtml;
+        editAssignedDropdown.innerHTML = dropdownHtml;
+        lucide.createIcons();
+      });
+    }
+
+    function openAddEmployeeModal() {
+      document.getElementById('addEmployeeForm').reset();
+      openModal('addEmployeeModal');
+    }
+
+    async function handleAddEmployee(e) {
+      e.preventDefault();
+      const id = document.getElementById('addEmpId').value.trim();
+      const name = document.getElementById('addEmpName').value.trim();
+      const role = document.getElementById('addEmpRole').value.trim();
+      const email = document.getElementById('addEmpEmail').value.trim();
+      const phone = document.getElementById('addEmpPhone').value.trim();
+      const password = document.getElementById('addEmpPassword').value;
+
+      try {
+        const res = await fetch('/api/employees', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            password,
+            name,
+            role: 'employee',
+            role_title: role,
+            employee_id: id,
+            phone
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to register developer.");
+
+        closeModal('addEmployeeModal');
+        alert("Developer account registered successfully!");
+      } catch (err) {
+        console.error(err);
+        alert(err.message);
+      }
+    }
+
+    function openEditEmployeeModal(empId) {
+      const emp = cachedEmployees.find(e => e.id === empId);
+      if (!emp) return;
+
+      document.getElementById('editEmpId').value = emp.id; // Store database UUID
+      document.getElementById('editEmpName').value = emp.name;
+      document.getElementById('editEmpRole').value = emp.roleTitle || '';
+      document.getElementById('editEmpEmail').value = emp.email;
+      document.getElementById('editEmpPhone').value = emp.phone || '';
+      document.getElementById('editEmpPassword').value = emp.password;
+
+      openModal('editEmployeeModal');
+    }
+
+    async function handleEditEmployee(e) {
+      e.preventDefault();
+      const id = document.getElementById('editEmpId').value;
+      const name = document.getElementById('editEmpName').value.trim();
+      const role = document.getElementById('editEmpRole').value.trim();
+      const email = document.getElementById('editEmpEmail').value.trim();
+      const phone = document.getElementById('editEmpPhone').value.trim();
+      const password = document.getElementById('editEmpPassword').value;
+
+      try {
+        const res = await fetch('/api/employees', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id,
+            name,
+            role: 'employee',
+            role_title: role,
+            phone,
+            password
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to update details.");
+
+        closeModal('editEmployeeModal');
+        alert("Developer details updated successfully!");
+      } catch (err) {
+        console.error(err);
+        alert(err.message);
+      }
+    }
+
+    async function deleteEmployee(empId) {
+      if (!confirm(`Are you sure you want to remove this developer profile?`)) return;
+      try {
+        const res = await fetch('/api/employees', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: empId })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to delete developer.");
+
+        alert("Developer deleted successfully!");
+      } catch (err) {
+        console.error(err);
+        alert(err.message);
+      }
+    }
+
+    // ----------------------------------------------------
+    // OWNER CRUD REGISTRY LOGIC
+    // ----------------------------------------------------
+    function initializeOwnersRoster() {
+      const tbody = document.getElementById('ownerOwnersTableBody');
+
+      ownersRosterUnsub = db.collection('owners').onSnapshot(snap => {
+        cachedOwners = [];
+        tbody.innerHTML = '';
+        
+        if (snap.empty) {
+          tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: var(--text-muted);">No administrators registered.</td></tr>';
+          return;
+        }
+
+        snap.forEach(doc => {
+          const owner = doc.data();
+          cachedOwners.push(owner);
+          
+          const isMaster = owner.id === "d3b07384-d113-4956-a5db-82b6b81d77a5";
+          
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><strong>${owner.employeeId}</strong></td>
+            <td>${owner.name}</td>
+            <td><span class="badge-status ${isMaster ? 'completed' : 'progress'}">${isMaster ? 'Primary Master' : 'Co-Owner'}</span></td>
+            <td><code>${owner.password}</code></td>
+            <td>
+              <div class="action-btn-group">
+                <button class="action-icon-btn edit-btn" onclick="openEditOwnerModal('${owner.id}')" title="Edit Owner">
+                  <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
+                </button>
+                ${isMaster ? '' : `
+                <button class="action-icon-btn delete-btn" onclick="deleteOwner('${owner.id}')" title="Delete Owner">
+                  <i data-lucide="trash" style="width: 14px; height: 14px;"></i>
+                </button>`}
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+        lucide.createIcons();
+      });
+    }
+
+    function openAddOwnerModal() {
+      document.getElementById('addOwnerForm').reset();
+      openModal('addOwnerModal');
+    }
+
+    async function handleAddOwner(e) {
+      e.preventDefault();
+      const id = document.getElementById('addOwnerId').value.trim();
+      const name = document.getElementById('addOwnerName').value.trim();
+      const password = document.getElementById('addOwnerPassword').value;
+      const email = `${id}@nexure.com`; // Dynamic owner email
+
+      try {
+        const res = await fetch('/api/employees', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email,
+            password,
+            name,
+            role: 'admin',
+            role_title: 'Co-Owner',
+            employee_id: id
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to add co-owner.");
+
+        closeModal('addOwnerModal');
+        alert("Co-Owner registered successfully!");
+      } catch (err) {
+        console.error(err);
+        alert(err.message);
+      }
+    }
+
+    function openEditOwnerModal(ownerId) {
+      const owner = cachedOwners.find(o => o.id === ownerId);
+      if (!owner) return;
+
+      document.getElementById('editOwnerId').value = owner.id;
+      document.getElementById('editOwnerName').value = owner.name;
+      document.getElementById('editOwnerPassword').value = owner.password;
+
+      openModal('editOwnerModal');
+    }
+
+    async function handleEditOwner(e) {
+      e.preventDefault();
+      const id = document.getElementById('editOwnerId').value;
+      const name = document.getElementById('editOwnerName').value.trim();
+      const password = document.getElementById('editOwnerPassword').value;
+
+      try {
+        const res = await fetch('/api/employees', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id,
+            name,
+            role: 'admin',
+            role_title: 'Co-Owner',
+            password
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to modify owner account.");
+
+        closeModal('editOwnerModal');
+        alert("Owner details updated successfully!");
+      } catch (err) {
+        console.error(err);
+        alert(err.message);
+      }
+    }
+
+    async function deleteOwner(ownerId) {
+      if (ownerId === "d3b07384-d113-4956-a5db-82b6b81d77a5") {
+        alert("Cannot delete the primary master Owner.");
+        return;
+      }
+      if (!confirm(`Are you sure you want to remove this Owner account?`)) return;
+      try {
+        const res = await fetch('/api/employees', {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: ownerId })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Failed to delete Owner.");
+
+        alert("Owner deleted successfully!");
+      } catch (err) {
+        console.error(err);
+        alert(err.message);
+      }
+    }
+
+    // ----------------------------------------------------
+    // PROJECT BOARD CRUD LOGIC
+    // ----------------------------------------------------
+    function initializeProjectsList() {
+      const tbody = document.getElementById('ownerProjectsTableBody');
+      
+      projectsListUnsub = db.collection('projects').onSnapshot(async snap => {
+        cachedProjects = [];
+        tbody.innerHTML = '';
+        
+        if (snap.empty) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No projects deployed.</td></tr>';
+          return;
+        }
+
+        const employeesSnap = await db.collection('employees').get();
+        const empMap = {};
+        employeesSnap.forEach(d => { empMap[d.id] = d.data(); });
+
+        snap.forEach(doc => {
+          const proj = doc.data();
+          cachedProjects.push(proj);
+          
+          const dev = empMap[proj.assignedTo] || { name: `Deleted Developer`, employeeId: proj.assignedTo };
+          
+          let badgeClass = 'pending';
+          if (proj.status === 'In Progress') badgeClass = 'progress';
+          else if (proj.status === 'Completed') badgeClass = 'completed';
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><strong>${proj.id}</strong></td>
+            <td>${proj.name}</td>
+            <td style="max-width: 250px; font-size: 0.85rem; color: var(--text-muted);">${proj.description}</td>
+            <td><strong>${dev.name}</strong> <span style="font-size:0.75rem; color:var(--text-light);">(${dev.employeeId || proj.assignedTo})</span></td>
+            <td><code>${proj.deadline}</code></td>
+            <td><span class="badge-status ${badgeClass}">${proj.status}</span></td>
+            <td>
+              <div class="action-btn-group">
+                <button class="action-icon-btn edit-btn" onclick="openEditProjectModal('${proj.id}')" title="Edit board">
+                  <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
+                </button>
+                <button class="action-icon-btn delete-btn" onclick="deleteProject('${proj.id}')" title="Delete board">
+                  <i data-lucide="trash" style="width: 14px; height: 14px;"></i>
+                </button>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+        lucide.createIcons();
+      });
+    }
+
+    function openAddProjectModal() {
+      document.getElementById('addProjectForm').reset();
+      openModal('addProjectModal');
+    }
+
+    async function handleAddProject(e) {
+      e.preventDefault();
+      if (!db) return;
+
+      const id = document.getElementById('addProjId').value.trim();
+      const name = document.getElementById('addProjName').value.trim();
+      const description = document.getElementById('addProjDesc').value.trim();
+      const assignedTo = document.getElementById('addProjAssigned').value;
+      const deadline = document.getElementById('addProjDeadline').value;
+      const status = document.getElementById('addProjStatus').value;
+
+      try {
+        const testDoc = await db.collection('projects').doc(id).get();
+        if (testDoc.exists) {
+          alert("Error: Project ID already registered.");
+          return;
+        }
+        await db.collection('projects').doc(id).set({ id, name, description, assignedTo, deadline, status });
+        closeModal('addProjectModal');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function openEditProjectModal(projId) {
+      const proj = cachedProjects.find(p => p.id === projId);
+      if (!proj) return;
+
+      document.getElementById('editProjId').value = proj.id;
+      document.getElementById('editProjName').value = proj.name;
+      document.getElementById('editProjDesc').value = proj.description;
+      document.getElementById('editProjAssigned').value = proj.assignedTo;
+      document.getElementById('editProjDeadline').value = proj.deadline;
+      document.getElementById('editProjStatus').value = proj.status;
+
+      openModal('editProjectModal');
+    }
+
+    async function handleEditProject(e) {
+      e.preventDefault();
+      if (!db) return;
+
+      const id = document.getElementById('editProjId').value;
+      const name = document.getElementById('editProjName').value.trim();
+      const description = document.getElementById('editProjDesc').value.trim();
+      const assignedTo = document.getElementById('editProjAssigned').value;
+      const deadline = document.getElementById('editProjDeadline').value;
+      const status = document.getElementById('editProjStatus').value;
+
+      try {
+        await db.collection('projects').doc(id).update({ name, description, assignedTo, deadline, status });
+        closeModal('editProjectModal');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function deleteProject(projId) {
+      if (!db) return;
+      if (!confirm(`Are you sure you want to delete project ${projId}?`)) return;
+      try {
+        await db.collection('projects').doc(projId).delete();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // ----------------------------------------------------
+    // ATTENDANCE AUDIT LOGS LOGIC
+    // ----------------------------------------------------
+    function initializeAttendanceAudit() {
+      const tbody = document.getElementById('ownerAttendanceTableBody');
+      
+      attendanceAuditUnsub = db.collection('attendance').onSnapshot(async snap => {
+        attendanceLogs = [];
+        if (snap.empty) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No logs found.</td></tr>';
+          return;
+        }
+
+        const employeesSnap = await db.collection('employees').get();
+        const empMap = {};
+        employeesSnap.forEach(d => empMap[d.id] = d.data());
+
+        snap.forEach(doc => {
+          const log = doc.data();
+          const dev = empMap[log.employeeId] || { employeeId: log.employeeId };
+          log.customEmployeeId = dev.employeeId;
+          attendanceLogs.push(log);
+        });
+
+        attendanceLogs.sort((a, b) => new Date(b.clockIn) - new Date(a.clockIn));
+        renderAttendanceAuditTable(attendanceLogs);
+      });
+    }
+
+    function renderAttendanceAuditTable(logs) {
+      const tbody = document.getElementById('ownerAttendanceTableBody');
+      tbody.innerHTML = '';
+
+      if (logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No matching audit logs.</td></tr>';
+        return;
+      }
+
+      logs.forEach(log => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><code>${log.id}</code></td>
+          <td><strong>${log.name}</strong> <span style="font-size:0.75rem; color:var(--text-light);">(${log.customEmployeeId || log.employeeId})</span></td>
+          <td>${log.date}</td>
+          <td>${new Date(log.clockIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</td>
+          <td>${log.clockOut ? new Date(log.clockOut).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}) : 'Running'}</td>
+          <td>${log.duration || 'Running'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function filterAuditLogs() {
+      const nameVal = document.getElementById('auditSearchName').value.toLowerCase().trim();
+      const dateVal = document.getElementById('auditSearchDate').value;
+
+      const filtered = attendanceLogs.filter(log => {
+        const matchesName = log.name.toLowerCase().includes(nameVal) || log.employeeId.toLowerCase().includes(nameVal) || (log.customEmployeeId && log.customEmployeeId.toLowerCase().includes(nameVal));
+        const matchesDate = !dateVal || log.date === dateVal;
+        return matchesName && matchesDate;
+      });
+      renderAttendanceAuditTable(filtered);
+    }
+
+    function clearAuditFilters() {
+      document.getElementById('auditSearchName').value = '';
+      document.getElementById('auditSearchDate').value = '';
+      renderAttendanceAuditTable(attendanceLogs);
+    }
+
+    // ----------------------------------------------------
+    // UPI INVOICING & RECEIPTS LOGIC
+    // ----------------------------------------------------
+    function initializePaymentsHistory() {
+      const tbody = document.getElementById('ownerPaymentsTableBody');
+      
+      paymentsHistoryUnsub = db.collection('payments').onSnapshot(snap => {
+        cachedPayments = [];
+        tbody.innerHTML = '';
+        
+        if (snap.empty) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No receipts logged.</td></tr>';
+          return;
+        }
+
+        snap.forEach(doc => cachedPayments.push(doc.data()));
+        cachedPayments.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        cachedPayments.forEach(pay => {
+          const dateStr = new Date(pay.timestamp).toLocaleDateString();
+          const badgeClass = pay.status === 'Success' ? 'completed' : 'pending';
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><code>${pay.id}</code></td>
+            <td><strong>${pay.customerName}</strong></td>
+            <td style="max-width: 200px; font-size: 0.85rem; color: var(--text-muted);">${pay.description}</td>
+            <td><strong>₹${parseInt(pay.amount).toLocaleString('en-IN')}</strong></td>
+            <td>${dateStr}</td>
+            <td><span class="badge-status ${badgeClass}">${pay.status}</span></td>
+            <td>
+              <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; width: auto;" onclick="openReceiptModal('${pay.id}')">
+                <i data-lucide="receipt" style="width: 12px; height: 12px;"></i> View Receipt
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+        lucide.createIcons();
+      });
+    }
+
+    async function handleGenerateInvoice(e) {
+      e.preventDefault();
+      if (!db) return;
+
+      const customerName = document.getElementById('billCust').value.trim();
+      const description = document.getElementById('billDesc').value.trim();
+      const amount = document.getElementById('billAmt').value;
+      
+      const logId = `PAY-${Date.now()}`;
+      const upiString = `upi://pay?pa=vpadmasree86-2@okhdfcbank&pn=Nexure%20Studios&am=${amount}&cu=INR`;
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiString)}`;
+
+      try {
+        await db.collection('payments').doc(logId).set({
+          id: logId,
+          customerName,
+          description,
+          amount,
+          upiString,
+          timestamp: new Date().toISOString(),
+          status: 'Pending'
+        });
+
+        activeInvoiceId = logId;
+        
+        document.getElementById('ownerQRClient').textContent = customerName;
+        document.getElementById('ownerQRDesc').textContent = description;
+        document.getElementById('ownerQRAmount').textContent = `₹${parseInt(amount).toLocaleString('en-IN')}.00`;
+        document.getElementById('ownerQRImg').src = qrUrl;
+
+        document.getElementById('ownerInvoicePlaceholder').style.display = 'none';
+        document.getElementById('ownerInvoiceDesk').style.display = 'flex';
+        
+        document.getElementById('ownerInvoiceForm').reset();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function confirmActiveInvoiceSuccess() {
+      if (!activeInvoiceId || !db) return;
+      try {
+        await db.collection('payments').doc(activeInvoiceId).update({ status: 'Success' });
+        alert("Payment flagged Success!");
+        cancelActiveInvoice();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function cancelActiveInvoice() {
+      activeInvoiceId = null;
+      document.getElementById('ownerInvoiceDesk').style.display = 'none';
+      document.getElementById('ownerInvoicePlaceholder').style.display = 'flex';
+    }
+
+    function openReceiptModal(paymentId) {
+      const pay = cachedPayments.find(p => p.id === paymentId);
+      if (!pay) return;
+
+      document.getElementById('recId').textContent = pay.id;
+      document.getElementById('recTimestamp').textContent = new Date(pay.timestamp).toLocaleString();
+      document.getElementById('recCustomer').textContent = pay.customerName;
+      document.getElementById('recDescription').textContent = pay.description;
+      document.getElementById('recAmount').textContent = `₹${parseInt(pay.amount).toLocaleString('en-IN')}.00`;
+
+      const badge = document.getElementById('recStatusBadge');
+      if (pay.status === 'Success') {
+        badge.className = "receipt-status-alert success";
+        badge.textContent = "✓ Paid via PhonePe UPI";
+      } else {
+        badge.className = "receipt-status-alert pending";
+        badge.textContent = "⚠ Payment Transaction Pending";
+      }
+
+      openModal('receiptModal');
+    }
+
+    function printReceipt() {
+      window.print();
+    }
+
+    // ----------------------------------------------------
+    // SYSTEM SETTINGS & FACTORY WIPES
+    // ----------------------------------------------------
+    async function triggerDatabaseReset() {
+      if (!db) return;
+      if (!confirm("WARNING: Wipe all project boards, attendance logs, active sessions, and payments from the database? This action is irreversible.")) return;
+
+      try {
+        await deleteCollection('projects');
+        await deleteCollection('attendance');
+        await deleteCollection('payments');
+        await deleteCollection('active_sessions');
+
+        alert("Database wiped successfully. Realtime tables are cleared.");
+        window.location.reload();
+      } catch (err) {
+        console.error("Wipe failed: ", err);
+      }
+    }
+
+    async function deleteCollection(collectionName) {
+      const snap = await db.collection(collectionName).get();
+      if (snap.empty) return;
+      const batch = db.batch();
+      snap.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+    }
+
+    // ----------------------------------------------------
+    // CLOUD DATABASE SETTINGS WIDGET FUNCTIONS
+    // ----------------------------------------------------
+    function loadSavedDbConfig() {
+      const url = import.meta.env.NEXT_PUBLIC_SUPABASE_URL || 'Not Configured';
+      const indicator = document.getElementById('dbTypeIndicator');
+      const urlVal = document.getElementById('supabaseUrlVal');
+      
+      if (indicator) {
+        indicator.textContent = "Supabase Cloud";
+        indicator.className = "badge-status completed";
+      }
+      if (urlVal) {
+        urlVal.textContent = url;
+      }
+    }
+  </script>
     }
 
     // ----------------------------------------------------
