@@ -1,0 +1,3495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nexure Studios | Management Console</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Firebase SDK Compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+  <!-- Unified DB Adapter -->
+  <script src="db.js"></script>
+
+  <style>
+    /* ----------------------------------------------------
+       1. SLATE OBSIDIAN DARK DESIGN SYSTEM
+       ---------------------------------------------------- */
+    :root {
+      --bg-main: #09090b;
+      --bg-sub: #030303;
+      --bg-card: rgba(20, 20, 25, 0.6);
+      --bg-input: rgba(30, 30, 40, 0.5);
+      
+      /* Colors */
+      --primary: #5e72e4;
+      --primary-hover: #485acf;
+      --secondary: #06b6d4;
+      --accent: #7c3aed;
+      --success: #2dce89;
+      --warning: #fb6340;
+      --danger: #f5365c;
+      
+      --brand-blue: #5e72e4;
+      --brand-red: #f5365c;
+      --brand-gray: #8898aa;
+      --brand-green: #2dce89;
+
+      --text-main: #f4f4f5;
+      --text-muted: #a1a1aa;
+      --text-light: #71717a;
+      
+      --border-color: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(255, 255, 255, 0.15);
+      
+      /* Typography */
+      --font-display: 'Outfit', sans-serif;
+      --font-sans: 'Inter', sans-serif;
+      
+      --transition-smooth: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      --box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+      --box-shadow-hover: 0 10px 40px rgba(94, 114, 228, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-main);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(94, 114, 228, 0.04) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(124, 58, 237, 0.03) 0%, transparent 45%);
+    }
+
+    h1, h2, h3, h4 {
+      font-family: var(--font-display);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    /* Custom Selection */
+    ::selection {
+      background-color: rgba(94, 114, 228, 0.25);
+      color: #ffffff;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--bg-sub);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--primary);
+    }
+
+    /* ----------------------------------------------------
+       2. LOGIN SCREEN & ROLE SWITCHER
+       ---------------------------------------------------- */
+    .login-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+
+    .login-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: var(--box-shadow);
+      text-align: center;
+      backdrop-filter: blur(16px);
+      transition: var(--transition-smooth);
+    }
+
+    .login-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 0.5rem;
+      text-decoration: none;
+    }
+
+    .logo-dots-wrapper {
+      display: flex;
+      gap: 0.25rem;
+      margin-bottom: 2rem;
+      justify-content: center;
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .dot-blue { background-color: var(--brand-blue); }
+    .dot-red { background-color: var(--brand-red); }
+    .dot-gray { background-color: var(--brand-gray); }
+    .dot-green { background-color: var(--brand-green); }
+
+    .login-card h2 {
+      font-size: 1.4rem;
+      margin-bottom: 0.5rem;
+      color: #ffffff;
+    }
+
+    .login-card p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 1.8rem;
+    }
+
+    /* Role switcher buttons */
+    .role-switcher-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0.3rem;
+      margin-bottom: 1.8rem;
+    }
+
+    .role-btn {
+      padding: 0.6rem;
+      border-radius: 9px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      transition: var(--transition-smooth);
+    }
+
+    .role-btn.active {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #ffffff;
+      box-shadow: 0 4px 12px rgba(94, 114, 228, 0.2);
+    }
+
+    .input-group {
+      text-align: left;
+      margin-bottom: 1.25rem;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-wrapper svg {
+      position: absolute;
+      left: 1rem;
+      color: var(--text-light);
+      width: 18px;
+      height: 18px;
+    }
+
+    .form-control {
+      width: 100%;
+      padding: 0.8rem 1rem 0.8rem 2.8rem;
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-main);
+      border-radius: 12px;
+      font-size: 0.95rem;
+      color: var(--text-main);
+      transition: var(--transition-smooth);
+      outline: none;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary);
+      background-color: rgba(30, 30, 45, 0.7);
+      box-shadow: 0 0 15px rgba(94, 114, 228, 0.15);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.8rem 1.8rem;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+      width: 100%;
+      border: none;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), var(--accent));
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(94, 114, 228, 0.2);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(94, 114, 228, 0.3);
+    }
+
+    .btn-secondary {
+      background-color: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      color: var(--text-muted);
+    }
+
+    .btn-secondary:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      color: var(--text-main);
+    }
+
+    .btn-success {
+      background-color: var(--success);
+      color: #fff;
+    }
+    .btn-success:hover { background-color: #24b97a; }
+
+    .btn-danger {
+      background-color: var(--danger);
+      color: #fff;
+    }
+    .btn-danger:hover { background-color: #e02447; }
+
+    .login-error {
+      color: var(--danger);
+      font-size: 0.85rem;
+      margin-top: 1rem;
+      display: none;
+    }
+
+    .demo-hint {
+      margin-top: 1.5rem;
+      padding: 0.8rem;
+      background-color: rgba(255, 255, 255, 0.02);
+      border: 1px dashed var(--border-color);
+      border-radius: 8px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      text-align: left;
+    }
+
+    /* Warning Banner */
+    .fb-warning-banner {
+      border-radius: 12px;
+      padding: 1rem;
+      font-size: 0.85rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      text-align: left;
+    }
+
+    /* ----------------------------------------------------
+       3. PORTAL CORE LAYOUT
+       ---------------------------------------------------- */
+    .portal-layout {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    /* Top Navigation Header */
+    .portal-header {
+      background-color: var(--bg-card);
+      border-bottom: 1px solid var(--border-color);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-display);
+      font-size: 1.3rem;
+      font-weight: 800;
+      color: #ffffff;
+      text-decoration: none;
+    }
+
+    .brand-logo-symbol {
+      width: 30px;
+      height: 30px;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 0.95rem;
+    }
+
+    .portal-badge {
+      background: rgba(94, 114, 228, 0.08);
+      color: var(--primary);
+      padding: 0.25rem 0.75rem;
+      border-radius: 100px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .user-profile-menu {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .user-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 2px solid var(--border-color);
+    }
+
+    .user-info-text {
+      text-align: right;
+    }
+
+    .user-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: var(--text-main);
+    }
+
+    .user-role {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .logout-btn {
+      background: none;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.5rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition-smooth);
+    }
+
+    .logout-btn:hover {
+      color: var(--danger);
+      border-color: rgba(245, 54, 92, 0.2);
+      background-color: rgba(245, 54, 92, 0.05);
+    }
+
+    /* Portal Sidebar & Main Panel Workspace */
+    .portal-workspace {
+      display: flex;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .portal-sidebar {
+      width: 250px;
+      background-color: var(--bg-card);
+      border-right: 1px solid var(--border-color);
+      padding: 1.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      backdrop-filter: blur(12px);
+    }
+
+    .sidebar-link {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.8rem 1rem;
+      border-radius: 10px;
+      color: var(--text-muted);
+      font-weight: 500;
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: var(--transition-smooth);
+      text-decoration: none;
+    }
+
+    .sidebar-link:hover {
+      background-color: rgba(255, 255, 255, 0.03);
+      color: var(--text-main);
+    }
+
+    .sidebar-link.active {
+      background-color: rgba(94, 114, 228, 0.08);
+      color: var(--primary);
+    }
+
+    .sidebar-link svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Content Area */
+    .portal-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2.2rem;
+      background: var(--bg-sub);
+    }
+
+    .portal-tab-panel {
+      display: none;
+      animation: fadeIn 0.4s ease;
+    }
+
+    .portal-tab-panel.active {
+      display: block;
+    }
+
+    .page-title {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      color: #ffffff;
+    }
+
+    .page-desc {
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+      font-size: 0.95rem;
+    }
+
+    /* ----------------------------------------------------
+       4. DASHBOARD / REGISTRIES COMPONENTS
+       ---------------------------------------------------- */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 2.1fr 0.9fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 991px) {
+      .dashboard-grid { grid-template-columns: 1fr; }
+    }
+
+    .panel-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: var(--box-shadow);
+      margin-bottom: 2rem;
+      backdrop-filter: blur(12px);
+    }
+
+    .card-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #ffffff;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .card-title-left {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Stats components */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 768px) {
+      .stats-row { grid-template-columns: 1fr; }
+    }
+
+    .stat-card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      padding: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 1.2rem;
+      box-shadow: var(--box-shadow);
+    }
+
+    .stat-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.2rem;
+    }
+    .stat-icon.primary { background-color: rgba(94, 114, 228, 0.08); color: var(--primary); }
+    .stat-icon.accent { background-color: rgba(124, 58, 237, 0.08); color: var(--accent); }
+    .stat-icon.success { background-color: rgba(45, 206, 137, 0.08); color: var(--success); }
+
+    .stat-details {
+      display: flex;
+      flex-direction: column;
+    }
+    .stat-details .value {
+      font-family: var(--font-display);
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #ffffff;
+      line-height: 1.2;
+    }
+    .stat-details .label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    /* Tables */
+    .table-container {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .custom-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    .custom-table th, 
+    .custom-table td {
+      padding: 1rem 1.2rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .custom-table th {
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-size: 0.75rem;
+      letter-spacing: 0.05em;
+    }
+
+    .custom-table tbody tr {
+      transition: var(--transition-fast);
+    }
+
+    .custom-table tbody tr:hover {
+      background-color: rgba(255, 255, 255, 0.02);
+    }
+
+    /* Badge Status */
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.25rem 0.6rem;
+      border-radius: 100px;
+    }
+    .badge-status.pending { background-color: rgba(251, 99, 64, 0.1); color: var(--warning); }
+    .badge-status.progress { background-color: rgba(94, 114, 228, 0.1); color: var(--primary); }
+    .badge-status.completed { background-color: rgba(45, 206, 137, 0.1); color: var(--success); }
+
+    /* Action Buttons */
+    .action-btn-group {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .action-icon-btn {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.4rem;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition-fast);
+    }
+    .action-icon-btn.edit-btn { color: var(--primary); }
+    .action-icon-btn.edit-btn:hover { background-color: rgba(94, 114, 228, 0.08); border-color: rgba(94, 114, 228, 0.2); }
+    
+    .action-icon-btn.delete-btn { color: var(--danger); }
+    .action-icon-btn.delete-btn:hover { background-color: rgba(245, 54, 92, 0.08); border-color: rgba(245, 54, 92, 0.2); }
+
+    /* Forms structures */
+    .form-grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+    @media (max-width: 768px) {
+      .form-grid-2 { grid-template-columns: 1fr; }
+    }
+
+    /* Shift Feed Item */
+    .shifts-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .shift-feed-item {
+      background-color: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: var(--transition-fast);
+    }
+    .shift-feed-item:hover {
+      border-color: var(--border-hover);
+    }
+
+    .shift-user-details {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+    }
+
+    .shift-user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: 2px solid var(--border-color);
+    }
+
+    .shift-user-name {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #ffffff;
+    }
+
+    .shift-user-id {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .shift-duration-badge {
+      text-align: right;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .shift-time {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--success);
+    }
+
+    .shift-start {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+    }
+
+    /* Attendance clocks card elements */
+    .attendance-tracker-box {
+      text-align: center;
+      padding: 1.5rem 0;
+    }
+
+    .live-time-display {
+      font-family: var(--font-display);
+      font-size: 3.2rem;
+      font-weight: 800;
+      color: #ffffff;
+      letter-spacing: 0.02em;
+      line-height: 1;
+      margin-bottom: 0.3rem;
+    }
+
+    .live-date-display {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-bottom: 1.8rem;
+    }
+
+    .attendance-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.4rem 1.1rem;
+      border-radius: 100px;
+      margin-bottom: 2rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .attendance-status-badge span:first-child {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+
+    .attendance-status-badge.in {
+      background: rgba(45, 206, 137, 0.08);
+      border: 1px solid rgba(45, 206, 137, 0.2);
+      color: var(--success);
+    }
+    .attendance-status-badge.in span:first-child {
+      background: var(--success);
+      animation: pulseGreen 1.5s infinite;
+    }
+
+    .attendance-status-badge.out {
+      background: rgba(245, 54, 92, 0.08);
+      border: 1px solid rgba(245, 54, 92, 0.2);
+      color: var(--danger);
+    }
+    .attendance-status-badge.out span:first-child {
+      background: var(--danger);
+    }
+
+    .clock-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      max-width: 320px;
+      margin: 0 auto 1.5rem auto;
+    }
+
+    .btn-clock {
+      border: none;
+      border-radius: 12px;
+      padding: 0.9rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: var(--transition-smooth);
+    }
+
+    .btn-clock-in {
+      background: linear-gradient(135deg, var(--success), #00cc99);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(45, 206, 137, 0.2);
+    }
+    .btn-clock-in:hover { transform: translateY(-1px); box-shadow: 0 6px 15px rgba(45, 206, 137, 0.35); }
+    .btn-clock-in:disabled {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      color: var(--text-light);
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .btn-clock-out {
+      background: linear-gradient(135deg, var(--danger), #ff4d6a);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(245, 54, 92, 0.2);
+    }
+    .btn-clock-out:hover { transform: translateY(-1px); box-shadow: 0 6px 15px rgba(245, 54, 92, 0.35); }
+    .btn-clock-out:disabled {
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      color: var(--text-light);
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
+
+    .timer-accumulator {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      background: rgba(0, 0, 0, 0.1);
+      border: 1px solid var(--border-color);
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+    }
+    .timer-accumulator span {
+      font-family: monospace;
+      font-weight: 700;
+      color: var(--success);
+    }
+
+    /* Tasks list cards */
+    .task-card-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
+
+    .task-item-card {
+      background-color: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 2rem;
+      transition: var(--transition-fast);
+    }
+    .task-item-card:hover {
+      border-color: var(--border-hover);
+    }
+
+    .task-details {
+      flex: 1;
+      text-align: left;
+    }
+
+    .task-header-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .task-name {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .task-desc {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+
+    .task-meta {
+      display: flex;
+      gap: 1.5rem;
+      font-size: 0.75rem;
+      color: var(--text-light);
+    }
+
+    .task-meta span {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+
+    .task-meta svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .task-actions-select {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      text-align: left;
+    }
+    .task-actions-select label {
+      font-size: 0.75rem;
+      color: var(--text-light);
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .task-select-input {
+      background: var(--bg-main);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.45rem 1rem;
+      color: #ffffff;
+      outline: none;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: var(--transition-fast);
+    }
+    .task-select-input:focus {
+      border-color: var(--primary);
+    }
+
+    /* UPI Billing UI */
+    .invoice-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 2rem;
+    }
+    @media (max-width: 768px) {
+      .invoice-grid { grid-template-columns: 1fr; }
+    }
+
+    .invoice-card {
+      background-color: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 20px;
+      padding: 2rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      justify-content: center;
+    }
+
+    .qr-container {
+      width: 180px;
+      height: 180px;
+      background: white;
+      border-radius: 12px;
+      padding: 8px;
+      margin: 1.5rem 0;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+    }
+    .qr-container img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    /* Modals Overlay */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      padding: 1.5rem;
+    }
+
+    .modal-overlay.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .modal-box {
+      background: #121214;
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      width: 100%;
+      max-width: 500px;
+      padding: 2.2rem;
+      position: relative;
+      box-shadow: var(--box-shadow);
+      transform: translateY(20px);
+      transition: transform 0.3s ease;
+    }
+
+    .modal-overlay.active .modal-box {
+      transform: translateY(0);
+    }
+
+    .modal-close-btn {
+      position: absolute;
+      right: 1.5rem;
+      top: 1.5rem;
+      cursor: pointer;
+      color: var(--text-light);
+      transition: var(--transition-fast);
+    }
+    .modal-close-btn:hover { color: #ffffff; }
+
+    .modal-title {
+      font-size: 1.3rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.75rem;
+      margin-top: 1.8rem;
+    }
+
+    .modal-actions .btn {
+      width: auto;
+    }
+
+    /* Print Receipt Styling */
+    .receipt-box {
+      background-color: #16161a;
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 1.8rem;
+      color: #f4f4f5;
+      text-align: left;
+    }
+
+    .receipt-header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .receipt-logo {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .receipt-subtitle {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      margin-top: 0.2rem;
+    }
+
+    .receipt-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.8rem;
+      font-size: 0.85rem;
+    }
+
+    .receipt-label {
+      color: var(--text-light);
+    }
+
+    .receipt-value {
+      font-weight: 500;
+    }
+
+    .receipt-divider {
+      border-top: 1px dashed var(--border-color);
+      margin: 1.2rem 0;
+    }
+
+    .receipt-total-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--success);
+    }
+
+    .receipt-status-alert {
+      background-color: rgba(45, 206, 137, 0.08);
+      border: 1px solid rgba(45, 206, 137, 0.15);
+      border-radius: 8px;
+      color: var(--success);
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 0.6rem;
+      text-align: center;
+      margin-top: 1.5rem;
+    }
+
+    .receipt-status-alert.pending {
+      background-color: rgba(251, 99, 64, 0.08);
+      border: 1px solid rgba(251, 99, 64, 0.15);
+      color: var(--warning);
+    }
+
+    .receipt-footer {
+      text-align: center;
+      color: var(--text-light);
+      font-size: 0.7rem;
+      margin-top: 1.5rem;
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      padding: 1rem;
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+      align-items: center;
+    }
+
+    .filter-input {
+      background: var(--bg-main);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      color: #ffffff;
+      outline: none;
+      font-size: 0.85rem;
+      width: auto;
+    }
+
+    .filter-search {
+      flex: 1;
+    }
+
+    /* Success profile alerts */
+    .success-alert {
+      background-color: rgba(45, 206, 137, 0.08);
+      color: var(--success);
+      border: 1px solid rgba(45, 206, 137, 0.15);
+      border-radius: 10px;
+      padding: 0.8rem 1rem;
+      font-size: 0.85rem;
+      margin-bottom: 1.5rem;
+      display: none;
+    }
+
+    @keyframes pulseGreen {
+      0% { box-shadow: 0 0 0 0 rgba(45, 206, 137, 0.4); }
+      70% { box-shadow: 0 0 0 8px rgba(45, 206, 137, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(45, 206, 137, 0); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media print {
+      body * { display: none; }
+      #receiptModalContent, 
+      #receiptModalContent * { display: block; }
+      #receiptModalContent {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        border: none;
+        background: white;
+        color: black;
+        box-shadow: none;
+      }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ----------------------------------------------------
+     LOGIN PANEL VIEW
+     ---------------------------------------------------- -->
+  <div class="login-container" id="loginModule">
+    <div class="login-card">
+      
+      <!-- DB Config Status Alert banner -->
+      <div id="loginFirebaseAlert" class="fb-warning-banner" style="display: none;">
+        <i data-lucide="shield-alert" style="flex-shrink: 0; width: 16px; height: 16px;"></i>
+        <span>Database state loader...</span>
+      </div>
+
+      <div class="login-logo">
+        <div class="brand-logo-symbol">N</div>
+        <span>Nexure Studios</span>
+      </div>
+      
+      <div class="logo-dots-wrapper">
+        <div class="dot dot-blue"></div>
+        <div class="dot dot-red"></div>
+        <div class="dot dot-gray"></div>
+        <div class="dot dot-green"></div>
+      </div>
+
+      <h2>Workspace Access</h2>
+      <p>Log in using credentials registered under your active role.</p>
+      
+      <!-- Role toggler switcher -->
+      <div class="role-switcher-group">
+        <div class="role-btn active" id="btnRoleEmployee" onclick="setLoginRole('employee')">
+          <i data-lucide="users"></i> Employee
+        </div>
+        <div class="role-btn" id="btnRoleOwner" onclick="setLoginRole('owner')">
+          <i data-lucide="crown"></i> Owner
+        </div>
+      </div>
+
+      <form id="loginForm" onsubmit="handleLoginSubmit(event)">
+        <div class="input-group">
+          <label for="loginId" id="labelLoginId">Employee ID</label>
+          <div class="input-wrapper">
+            <i data-lucide="user" id="iconLoginId"></i>
+            <input type="text" id="loginId" class="form-control" placeholder="e.g. EMP-101" required autocomplete="username">
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="loginPassword">Password</label>
+          <div class="input-wrapper">
+            <i data-lucide="lock"></i>
+            <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" id="loginSubmitBtn">Access Dashboard</button>
+        
+        <a href="client_payment.html" class="btn btn-secondary" style="margin-top: 0.8rem;">
+          <i data-lucide="credit-card"></i> Client Payment Desk
+        </a>
+      </form>
+      
+      <div id="loginError" class="login-error">Invalid Username or Password. Please try again.</div>
+      
+      <div class="demo-hint" id="loginHintBox">
+        <strong>Default Employee Accounts:</strong><br>
+        ID: <code>EMP-101</code> / Pass: <code>karan</code><br>
+        ID: <code>EMP-102</code> / Pass: <code>aisha</code>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ----------------------------------------------------
+     CORPORATE DASHBOARD WORKSPACE VIEW
+     ---------------------------------------------------- -->
+  <div class="portal-layout" id="portalWorkspace" style="display: none;">
+    
+    <!-- Workspace Top Header -->
+    <header class="portal-header">
+      <div class="brand-group">
+        <div class="brand-logo">
+          <div class="brand-logo-symbol">N</div>
+          <span>Nexure</span>
+        </div>
+        <span class="portal-badge" id="activeBadgeRole">Employee Portal</span>
+      </div>
+      
+      <div class="user-profile-menu">
+        <div class="user-info-text">
+          <div class="user-name" id="navProfileName">Loading User...</div>
+          <div class="user-role" id="navProfileRole">Loading Designation...</div>
+        </div>
+        <img src="" alt="Avatar" class="user-avatar" id="navProfileAvatar">
+        <button class="logout-btn" onclick="handleLogout()" title="Log Out">
+          <i data-lucide="log-out"></i>
+        </button>
+      </div>
+    </header>
+
+    <!-- Sidebar and working screen panel -->
+    <div class="portal-workspace">
+      
+      <!-- Side Navigation Menu (Will be populated dynamically in JS) -->
+      <aside class="portal-sidebar" id="portalSidebar">
+        <!-- Rendered based on logged in role -->
+      </aside>
+
+      <!-- Main working space panel -->
+      <main class="portal-content" id="portalContentPanel">
+        
+        <!-- ----------------------------------------------------
+           EMPLOYEE PORTAL TABS
+           ---------------------------------------------------- -->
+
+        <!-- Employee Tab 1: Dashboard Panel -->
+        <section class="portal-tab-panel" id="tab-emp-dashboard">
+          <h1 class="page-title" id="empGreetingMessage">Welcome back!</h1>
+          <p class="page-desc">Track and document your shifts and active projects daily.</p>
+          
+          <div class="dashboard-grid">
+            <div class="panel-card">
+              <h3 class="card-title"><span class="card-title-left"><i data-lucide="clock" style="color: var(--primary);"></i> Shift Chronograph</span></h3>
+              <div class="attendance-tracker-box">
+                <div class="live-time-display" id="liveTime">00:00:00</div>
+                <div class="live-date-display" id="liveDate">Loading date...</div>
+                
+                <div class="attendance-status-badge out" id="empStatusBadge">
+                  <span></span> <span id="empStatusLabel">Clocked Out</span>
+                </div>
+                
+                <div class="clock-actions">
+                  <button class="btn-clock btn-clock-in" id="empClockInBtn" onclick="handleEmpClockIn()">
+                    <i data-lucide="play"></i> Clock In
+                  </button>
+                  <button class="btn-clock btn-clock-out" id="empClockOutBtn" onclick="handleEmpClockOut()" disabled>
+                    <i data-lucide="square"></i> Clock Out
+                  </button>
+                </div>
+                
+                <div class="timer-accumulator" id="empActiveSessionTimer" style="display: none;">
+                  Duration: <span id="empElapsedTime">00h 00m 00s</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="panel-card">
+              <h3 class="card-title"><span class="card-title-left"><i data-lucide="pie-chart" style="color: var(--secondary);"></i> Activity Summary</span></h3>
+              <div class="stats-row" style="grid-template-columns: 1fr; gap: 1rem;">
+                <div class="stat-card">
+                  <div class="stat-icon primary"><i data-lucide="folder"></i></div>
+                  <div class="stat-details">
+                    <span class="value" id="empStatsTotalTasks">0</span>
+                    <span class="label">Assigned Projects</span>
+                  </div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-icon success"><i data-lucide="check-square"></i></div>
+                  <div class="stat-details">
+                    <span class="value" id="empStatsCompletedTasks" style="color: var(--success);">0</span>
+                    <span class="label">Completed Tasks</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Employee Tab 2: My Work Tasks -->
+        <section class="portal-tab-panel" id="tab-emp-tasks">
+          <h1 class="page-title">My Assigned Objectives</h1>
+          <p class="page-desc">Review targets and update status designations of allocated project boards.</p>
+          <div class="panel-card">
+            <div class="task-card-list" id="empTaskListContainer">
+              <!-- JS populated -->
+            </div>
+          </div>
+        </section>
+
+        <!-- Employee Tab 3: Attendance Logs -->
+        <section class="portal-tab-panel" id="tab-emp-attendance">
+          <h1 class="page-title">My Attendance Logs</h1>
+          <p class="page-desc">Audited clock-in and clock-out details registered under your user profile.</p>
+          <div class="panel-card">
+            <div class="table-container">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Clock In</th>
+                    <th>Clock Out</th>
+                    <th>Duration</th>
+                  </tr>
+                </thead>
+                <tbody id="empAttendanceTableBody">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Employee Tab 4: Profile Settings -->
+        <section class="portal-tab-panel" id="tab-emp-profile">
+          <h1 class="page-title">Profile Configuration</h1>
+          <p class="page-desc">Update your communication contacts and security access password.</p>
+          <div class="panel-card" style="max-width: 800px;">
+            <div class="success-alert" id="empProfileSuccessAlert">Changes saved successfully in database.</div>
+            <form id="empProfileForm" onsubmit="handleEmpProfileUpdate(event)">
+              <div class="profile-form-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; margin-bottom: 1.5rem;">
+                <div class="input-group" style="grid-column: span 2;">
+                  <label>ID Tag (Read Only)</label>
+                  <input type="text" id="empProfileFieldId" class="form-control" readonly style="background-color: var(--border-color); color: var(--text-light); cursor: not-allowed; padding-left: 1rem;">
+                </div>
+                <div class="input-group">
+                  <label for="empProfileFieldName">Full Name</label>
+                  <div class="input-wrapper">
+                    <i data-lucide="user"></i>
+                    <input type="text" id="empProfileFieldName" class="form-control" required>
+                  </div>
+                </div>
+                <div class="input-group">
+                  <label for="empProfileFieldEmail">Email Address</label>
+                  <div class="input-wrapper">
+                    <i data-lucide="mail"></i>
+                    <input type="email" id="empProfileFieldEmail" class="form-control" required>
+                  </div>
+                </div>
+                <div class="input-group">
+                  <label for="empProfileFieldPhone">Phone Number</label>
+                  <div class="input-wrapper">
+                    <i data-lucide="phone"></i>
+                    <input type="text" id="empProfileFieldPhone" class="form-control" required>
+                  </div>
+                </div>
+                <div class="input-group">
+                  <label for="empProfileFieldPassword">Login Password</label>
+                  <div class="input-wrapper">
+                    <i data-lucide="key-round"></i>
+                    <input type="text" id="empProfileFieldPassword" class="form-control" required>
+                  </div>
+                </div>
+              </div>
+              <div style="text-align: right; border-top: 1px solid var(--border-color); padding-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary" style="width: auto; padding: 0.6rem 2.2rem;">Update Profile</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+
+        <!-- ----------------------------------------------------
+           OWNER PORTAL TABS
+           ---------------------------------------------------- -->
+
+        <!-- Owner Tab 1: Overview Dashboard -->
+        <section class="portal-tab-panel" id="tab-owner-overview">
+          <h1 class="page-title">Executive Operations Hub</h1>
+          <p class="page-desc">Track real-time company operational logs, invoice payments, and active employee shifts.</p>
+          
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="stat-icon primary"><i data-lucide="users"></i></div>
+              <div class="stat-details">
+                <span class="value" id="ownerStatsEmployees">0</span>
+                <span class="label">Registered Developers</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon accent"><i data-lucide="folder-kanban"></i></div>
+              <div class="stat-details">
+                <span class="value" id="ownerStatsProjects">0</span>
+                <span class="label">Active Projects</span>
+              </div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon success"><i data-lucide="indian-rupee"></i></div>
+              <div class="stat-details">
+                <span class="value" id="ownerStatsRevenue">₹0</span>
+                <span class="label">Revenue Collected</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="dashboard-grid">
+            <div class="panel-card">
+              <h3 class="card-title">
+                <span class="card-title-left"><i data-lucide="activity" style="color: var(--success);"></i> Live Shifts Feed</span>
+                <span class="portal-badge" style="background-color: rgba(45,206,137,0.08); color: var(--success); font-size: 0.75rem;">Active</span>
+              </h3>
+              <div class="shifts-list" id="ownerActiveShiftsFeed">
+                <!-- JS populated -->
+              </div>
+            </div>
+
+            <div class="panel-card">
+              <h3 class="card-title"><i data-lucide="sparkles" style="color: var(--accent);"></i> Operations Panel</h3>
+              <div style="display: flex; flex-direction: column; gap: 0.8rem;">
+                <button class="btn btn-secondary" onclick="ownerSwitchTabLink('employees')"><i data-lucide="user-plus"></i> Add Employee</button>
+                <button class="btn btn-secondary" onclick="ownerSwitchTabLink('owners')"><i data-lucide="user-cog"></i> Add Co-Owner</button>
+                <button class="btn btn-secondary" onclick="ownerSwitchTabLink('projects')"><i data-lucide="folder-plus"></i> Assign Project</button>
+                <button class="btn btn-secondary" onclick="ownerSwitchTabLink('payments')"><i data-lucide="indian-rupee"></i> Create Invoice</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Owner Tab 2: Employee Registry -->
+        <section class="portal-tab-panel" id="tab-owner-employees">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <h1 class="page-title">Developer Directory</h1>
+            <button class="btn btn-primary" style="width: auto; padding: 0.6rem 1.5rem;" onclick="openAddEmployeeModal()">
+              <i data-lucide="user-plus"></i> Register Developer
+            </button>
+          </div>
+          <p class="page-desc">Create or manage employee user credentials and account details.</p>
+          
+          <div class="panel-card">
+            <div class="table-container">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Avatar</th>
+                    <th>Employee ID</th>
+                    <th>Name</th>
+                    <th>Role Designation</th>
+                    <th>Email Address</th>
+                    <th>Phone</th>
+                    <th>Password</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="ownerEmployeesTableBody">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Owner Tab 3: Owner Registry [NEW] -->
+        <section class="portal-tab-panel" id="tab-owner-owners">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <h1 class="page-title">Executive Owners Registry</h1>
+            <button class="btn btn-primary" style="width: auto; padding: 0.6rem 1.5rem;" onclick="openAddOwnerModal()">
+              <i data-lucide="user-cog"></i> Add Co-Owner
+            </button>
+          </div>
+          <p class="page-desc">Authorize administrative credentials to access master settings and billing registries.</p>
+          
+          <div class="panel-card">
+            <div class="table-container">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Owner Username (ID)</th>
+                    <th>Full Name</th>
+                    <th>Access Role</th>
+                    <th>Password</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="ownerOwnersTableBody">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Owner Tab 4: Project Planner -->
+        <section class="portal-tab-panel" id="tab-owner-projects">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+            <h1 class="page-title">Project Objectives</h1>
+            <button class="btn btn-primary" style="width: auto; padding: 0.6rem 1.5rem;" onclick="openAddProjectModal()">
+              <i data-lucide="folder-plus"></i> Deploy Project
+            </button>
+          </div>
+          <p class="page-desc">Launch targets, establish milestones, and assign tasks to engineers.</p>
+          
+          <div class="panel-card">
+            <div class="table-container">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Project ID</th>
+                    <th>Project Name</th>
+                    <th>Objective Directives</th>
+                    <th>Assigned Developer</th>
+                    <th>Target Deadline</th>
+                    <th>Progress Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="ownerProjectsTableBody">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Owner Tab 5: Attendance Audit Logs -->
+        <section class="portal-tab-panel" id="tab-owner-attendance">
+          <h1 class="page-title">Attendance Security Audit</h1>
+          <p class="page-desc">Filter, inspect, and audit clock-in / clock-out records registered globally.</p>
+          
+          <div class="filter-bar">
+            <input type="text" id="auditSearchName" class="filter-input filter-search" placeholder="Search by name or Employee ID..." oninput="filterAuditLogs()">
+            <input type="date" id="auditSearchDate" class="filter-input" onchange="filterAuditLogs()">
+            <button class="btn btn-secondary" style="width: auto;" onclick="clearAuditFilters()">Reset Filters</button>
+          </div>
+
+          <div class="panel-card">
+            <div class="table-container">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Log ID</th>
+                    <th>Employee Name</th>
+                    <th>Date</th>
+                    <th>Clock In</th>
+                    <th>Clock Out</th>
+                    <th>Duration</th>
+                  </tr>
+                </thead>
+                <tbody id="ownerAttendanceTableBody">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Owner Tab 6: UPI Invoicing Registry -->
+        <section class="portal-tab-panel" id="tab-owner-payments">
+          <h1 class="page-title">Merchant Billing Console</h1>
+          <p class="page-desc">Generate instant client scan QR billing cards and inspect transaction histories.</p>
+          
+          <div class="invoice-grid">
+            <div class="panel-card" style="margin-bottom: 0;">
+              <h3 class="card-title"><span class="card-title-left"><i data-lucide="file-input" style="color: var(--accent);"></i> Billing Generator</span></h3>
+              <form id="ownerInvoiceForm" onsubmit="handleGenerateInvoice(event)">
+                <div class="input-group">
+                  <label for="billCust">Client Company / Name</label>
+                  <div class="input-wrapper">
+                    <i data-lucide="building"></i>
+                    <input type="text" id="billCust" class="form-control" placeholder="e.g. Acme Corp" required>
+                  </div>
+                </div>
+                <div class="input-group">
+                  <label for="billDesc">Billing Item / Project</label>
+                  <div class="input-wrapper">
+                    <i data-lucide="file-text"></i>
+                    <input type="text" id="billDesc" class="form-control" placeholder="e.g. Consultation Fees" required>
+                  </div>
+                </div>
+                <div class="input-group">
+                  <label for="billAmt">Amount (INR)</label>
+                  <div class="input-wrapper">
+                    <i data-lucide="indian-rupee"></i>
+                    <input type="number" id="billAmt" class="form-control" placeholder="0" min="1" required>
+                  </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Create Invoice QR Card</button>
+              </form>
+            </div>
+
+            <div class="invoice-card" id="ownerInvoiceDesk" style="display: none;">
+              <div style="font-weight: 700; font-size: 1.1rem;" id="ownerQRClient">Acme Corp</div>
+              <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;" id="ownerQRDesc">Consultation</div>
+              
+              <div class="qr-container">
+                <img id="ownerQRImg" src="" alt="UPI Scan QR">
+              </div>
+              
+              <div style="font-family: var(--font-display); font-weight: 800; font-size: 1.6rem; color: var(--text-main); margin-bottom: 0.5rem;" id="ownerQRAmount">₹0.00</div>
+              <div style="font-size: 0.8rem; color: var(--accent); font-weight: 600; margin-bottom: 1.5rem;">PhonePe UPI: vpadmasree86-2@okhdfcbank</div>
+              
+              <div style="display: flex; gap: 0.5rem; width: 100%;">
+                <button class="btn btn-success" onclick="confirmActiveInvoiceSuccess()">Confirm Success</button>
+                <button class="btn btn-secondary" onclick="cancelActiveInvoice()">Cancel</button>
+              </div>
+            </div>
+
+            <div class="invoice-card" id="ownerInvoicePlaceholder">
+              <i data-lucide="qr-code" style="width: 56px; height: 56px; color: var(--text-light); margin-bottom: 0.8rem;"></i>
+              <p style="color: var(--text-muted); font-size: 0.85rem; max-width: 200px;">Generate a new invoice form to display PhonePe scan card.</p>
+            </div>
+          </div>
+
+          <div class="panel-card" style="margin-top: 2rem;">
+            <h3 class="card-title"><span class="card-title-left"><i data-lucide="receipt" style="color: var(--primary);"></i> Invoices & Receipts Ledger</span></h3>
+            <div class="table-container">
+              <table class="custom-table">
+                <thead>
+                  <tr>
+                    <th>Billing ID</th>
+                    <th>Client Name</th>
+                    <th>Description</th>
+                    <th>Amount Paid</th>
+                    <th>Timestamp</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="ownerPaymentsTableBody">
+                  <!-- JS populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Owner Tab 7: Settings -->
+        <section class="portal-tab-panel" id="tab-owner-settings">
+          <h1 class="page-title">Configuration Settings</h1>
+          <p class="page-desc">Manage system database connection status and factory metadata directories.</p>
+          
+          <!-- Cloud Database Sync Card -->
+          <div class="panel-card" style="max-width: 600px;">
+            <h3 class="card-title"><i data-lucide="database" style="color: var(--primary);"></i> Cloud Database Sync Setup</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5;">
+              Currently active database type: <strong id="dbTypeIndicator" style="color: var(--success); font-family: monospace;">Local Storage</strong>.
+              Provide your Firebase project details to connect this dashboard to cloud storage to prevent any data loss on Vercel.
+            </p>
+            <form id="dbSetupForm" onsubmit="handleDbSetup(event)">
+              <div class="input-group">
+                <label for="dbSetupType">Database Type</label>
+                <select id="dbSetupType" class="form-control" style="padding-left: 1rem;" onchange="toggleDbFields(this.value)">
+                  <option value="local">Local Storage Mode (Browser Cache)</option>
+                  <option value="firebase">Firebase Firestore Cloud</option>
+                </select>
+              </div>
+              
+              <div id="firebaseConfigFields" style="display: none; margin-top: 1rem;">
+                <div class="input-group">
+                  <label for="dbApiKey">API Key</label>
+                  <input type="text" id="dbApiKey" class="form-control" style="padding-left: 1rem;" placeholder="AIzaSy...">
+                </div>
+                <div class="input-group">
+                  <label for="dbAuthDomain">Auth Domain</label>
+                  <input type="text" id="dbAuthDomain" class="form-control" style="padding-left: 1rem;" placeholder="project-id.firebaseapp.com">
+                </div>
+                <div class="input-group">
+                  <label for="dbProjectId">Project ID</label>
+                  <input type="text" id="dbProjectId" class="form-control" style="padding-left: 1rem;" placeholder="project-id">
+                </div>
+                <div class="input-group">
+                  <label for="dbStorageBucket">Storage Bucket</label>
+                  <input type="text" id="dbStorageBucket" class="form-control" style="padding-left: 1rem;" placeholder="project-id.appspot.com">
+                </div>
+                <div class="input-group">
+                  <label for="dbMessagingSenderId">Messaging Sender ID</label>
+                  <input type="text" id="dbMessagingSenderId" class="form-control" style="padding-left: 1rem;" placeholder="1234567890">
+                </div>
+                <div class="input-group">
+                  <label for="dbAppId">App ID</label>
+                  <input type="text" id="dbAppId" class="form-control" style="padding-left: 1rem;" placeholder="1:1234567890:web:abcdef">
+                </div>
+              </div>
+              
+              <div style="display: flex; gap: 0.5rem; margin-top: 1.5rem;">
+                <button type="submit" class="btn btn-primary" style="width: auto; padding: 0.6rem 2rem;">Save & Connect</button>
+                <button type="button" class="btn btn-secondary" onclick="clearDbSetup()" id="clearDbBtn" style="width: auto; padding: 0.6rem 1.5rem; display: none;">Disconnect Cloud</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Factory Wipe Card -->
+          <div class="panel-card" style="max-width: 600px; border-color: rgba(245,54,92,0.2); background-color: rgba(245,54,92,0.01);">
+            <h3 class="card-title" style="color: var(--danger);"><i data-lucide="trash-2"></i> Wipe System Registries</h3>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; line-height: 1.5;">
+              Wipe all employee lists, project boards, attendance timestamp logs, and payment receipts from Cloud Firestore/Local Storage, then re-seed the system with default mock records.
+            </p>
+            <button class="btn btn-danger" onclick="triggerDatabaseReset()" style="width: auto; padding: 0.6rem 2rem;">Wipe & Seed Database</button>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+
+  <!-- ----------------------------------------------------
+     MODAL OVERLAYS FOR MANAGER WORKFLOWS (CRUD)
+     ---------------------------------------------------- -->
+
+  <!-- Modal 1: Register/Add Employee -->
+  <div class="modal-overlay" id="addEmployeeModal">
+    <div class="modal-box">
+      <button class="modal-close-btn" onclick="closeModal('addEmployeeModal')"><i data-lucide="x"></i></button>
+      <h3 class="modal-title"><i data-lucide="user-plus" style="color: var(--primary);"></i> Register Developer</h3>
+      <form id="addEmployeeForm" onsubmit="handleAddEmployee(event)">
+        <div class="input-group">
+          <label for="addEmpId">Employee ID Tag (Unique Key)</label>
+          <input type="text" id="addEmpId" class="form-control" placeholder="e.g. EMP-103" required style="padding-left: 1rem;">
+        </div>
+        <div class="input-group">
+          <label for="addEmpName">Full Name</label>
+          <input type="text" id="addEmpName" class="form-control" placeholder="e.g. Karan Roy" required style="padding-left: 1rem;">
+        </div>
+        <div class="input-group">
+          <label for="addEmpRole">Designated Role</label>
+          <input type="text" id="addEmpRole" class="form-control" placeholder="e.g. UI Designer" required style="padding-left: 1rem;">
+        </div>
+        <div class="form-grid-2">
+          <div class="input-group">
+            <label for="addEmpEmail">Email Address</label>
+            <input type="email" id="addEmpEmail" class="form-control" placeholder="name@nexure.com" required style="padding-left: 1rem;">
+          </div>
+          <div class="input-group">
+            <label for="addEmpPhone">Phone Number</label>
+            <input type="text" id="addEmpPhone" class="form-control" placeholder="+91 98765..." required style="padding-left: 1rem;">
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="addEmpPassword">Login Password</label>
+          <input type="text" id="addEmpPassword" class="form-control" placeholder="Enter password" required style="padding-left: 1rem;">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('addEmployeeModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Developer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 2: Edit Employee -->
+  <div class="modal-overlay" id="editEmployeeModal">
+    <div class="modal-box">
+      <button class="modal-close-btn" onclick="closeModal('editEmployeeModal')"><i data-lucide="x"></i></button>
+      <h3 class="modal-title"><i data-lucide="user-cog" style="color: var(--primary);"></i> Modify Developer Details</h3>
+      <form id="editEmployeeForm" onsubmit="handleEditEmployee(event)">
+        <div class="input-group">
+          <label>Employee ID Tag (Read Only)</label>
+          <input type="text" id="editEmpId" class="form-control" readonly style="background-color: var(--border-color); color: var(--text-light); cursor: not-allowed; padding-left: 1rem;">
+        </div>
+        <div class="input-group">
+          <label for="editEmpName">Full Name</label>
+          <input type="text" id="editEmpName" class="form-control" required style="padding-left: 1rem;">
+        </div>
+        <div class="input-group">
+          <label for="editEmpRole">Designated Role</label>
+          <input type="text" id="editEmpRole" class="form-control" required style="padding-left: 1rem;">
+        </div>
+        <div class="form-grid-2">
+          <div class="input-group">
+            <label for="editEmpEmail">Email Address</label>
+            <input type="email" id="editEmpEmail" class="form-control" required style="padding-left: 1rem;">
+          </div>
+          <div class="input-group">
+            <label for="editEmpPhone">Phone Number</label>
+            <input type="text" id="editEmpPhone" class="form-control" required style="padding-left: 1rem;">
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="editEmpPassword">Login Password</label>
+          <input type="text" id="editEmpPassword" class="form-control" required style="padding-left: 1rem;">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('editEmployeeModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Update Developer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 3: Register/Add Owner [NEW] -->
+  <div class="modal-overlay" id="addOwnerModal">
+    <div class="modal-box">
+      <button class="modal-close-btn" onclick="closeModal('addOwnerModal')"><i data-lucide="x"></i></button>
+      <h3 class="modal-title"><i data-lucide="user-cog" style="color: var(--accent);"></i> Add Co-Owner</h3>
+      <form id="addOwnerForm" onsubmit="handleAddOwner(event)">
+        <div class="input-group">
+          <label for="addOwnerId">Owner Username (Unique ID)</label>
+          <input type="text" id="addOwnerId" class="form-control" placeholder="e.g. 9696, subham" required style="padding-left: 1rem;">
+        </div>
+        <div class="input-group">
+          <label for="addOwnerName">Full Name</label>
+          <input type="text" id="addOwnerName" class="form-control" placeholder="e.g. Subham Roy" required style="padding-left: 1rem;">
+        </div>
+        <div class="input-group">
+          <label for="addOwnerPassword">Login Password</label>
+          <input type="text" id="addOwnerPassword" class="form-control" placeholder="Enter password" required style="padding-left: 1rem;">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('addOwnerModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Owner</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 4: Edit Owner [NEW] -->
+  <div class="modal-overlay" id="editOwnerModal">
+    <div class="modal-box">
+      <button class="modal-close-btn" onclick="closeModal('editOwnerModal')"><i data-lucide="x"></i></button>
+      <h3 class="modal-title"><i data-lucide="user-cog" style="color: var(--accent);"></i> Modify Owner Account</h3>
+      <form id="editOwnerForm" onsubmit="handleEditOwner(event)">
+        <div class="input-group">
+          <label>Owner Username (Read Only)</label>
+          <input type="text" id="editOwnerId" class="form-control" readonly style="background-color: var(--border-color); color: var(--text-light); cursor: not-allowed; padding-left: 1rem;">
+        </div>
+        <div class="input-group">
+          <label for="editOwnerName">Full Name</label>
+          <input type="text" id="editOwnerName" class="form-control" required style="padding-left: 1rem;">
+        </div>
+        <div class="input-group">
+          <label for="editOwnerPassword">Login Password</label>
+          <input type="text" id="editOwnerPassword" class="form-control" required style="padding-left: 1rem;">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('editOwnerModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Update Owner</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 5: Add Project -->
+  <div class="modal-overlay" id="addProjectModal">
+    <div class="modal-box">
+      <button class="modal-close-btn" onclick="closeModal('addProjectModal')"><i data-lucide="x"></i></button>
+      <h3 class="modal-title"><i data-lucide="folder-plus" style="color: var(--primary);"></i> Deploy Project Objective</h3>
+      <form id="addProjectForm" onsubmit="handleAddProject(event)">
+        <div class="input-group">
+          <label for="addProjId">Project ID Tag</label>
+          <input type="text" id="addProjId" class="form-control" placeholder="e.g. PRJ-304" required style="padding-left: 1rem;">
+        </div>
+        <div class="input-group">
+          <label for="addProjName">Project Name</label>
+          <input type="text" id="addProjName" class="form-control" placeholder="e.g. Aura Web Portal" required style="padding-left: 1rem;">
+        </div>
+        <div class="input-group">
+          <label for="addProjDesc">Description / Objectives</label>
+          <textarea id="addProjDesc" class="form-control" placeholder="Describe the objectives..." required style="padding-left: 1rem; min-height: 80px; resize: vertical;"></textarea>
+        </div>
+        <div class="input-group">
+          <label for="addProjAssigned">Assign Developer</label>
+          <select id="addProjAssigned" class="form-control" style="padding-left: 1rem;" required>
+            <!-- Filled dynamically -->
+          </select>
+        </div>
+        <div class="form-grid-2">
+          <div class="input-group">
+            <label for="addProjDeadline">Target Deadline</label>
+            <input type="date" id="addProjDeadline" class="form-control" required style="padding-left: 1rem;">
+          </div>
+          <div class="input-group">
+            <label for="addProjStatus">Current Status</label>
+            <select id="addProjStatus" class="form-control" style="padding-left: 1rem;" required>
+              <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('addProjectModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Deploy Board</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 6: Edit Project -->
+  <div class="modal-overlay" id="editProjectModal">
+    <div class="modal-box">
+      <button class="modal-close-btn" onclick="closeModal('editProjectModal')"><i data-lucide="x"></i></button>
+      <h3 class="modal-title"><i data-lucide="folder-sync" style="color: var(--primary);"></i> Edit Project board</h3>
+      <form id="editProjectForm" onsubmit="handleEditProject(event)">
+        <div class="input-group">
+          <label>Project ID (Read Only)</label>
+          <input type="text" id="editProjId" class="form-control" readonly style="background-color: var(--border-color); color: var(--text-light); cursor: not-allowed; padding-left: 1rem;">
+        </div>
+        <div class="input-group">
+          <label for="editProjName">Project Name</label>
+          <input type="text" id="editProjName" class="form-control" required style="padding-left: 1rem;">
+        </div>
+        <div class="input-group">
+          <label for="editProjDesc">Description / Objectives</label>
+          <textarea id="editProjDesc" class="form-control" required style="padding-left: 1rem; min-height: 80px; resize: vertical;"></textarea>
+        </div>
+        <div class="input-group">
+          <label for="editProjAssigned">Assign Developer</label>
+          <select id="editProjAssigned" class="form-control" style="padding-left: 1rem;" required>
+            <!-- Filled dynamically -->
+          </select>
+        </div>
+        <div class="form-grid-2">
+          <div class="input-group">
+            <label for="editProjDeadline">Target Deadline</label>
+            <input type="date" id="editProjDeadline" class="form-control" required style="padding-left: 1rem;">
+          </div>
+          <div class="input-group">
+            <label for="editProjStatus">Current Status</label>
+            <select id="editProjStatus" class="form-control" style="padding-left: 1rem;" required>
+              <option value="Pending">Pending</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Completed">Completed</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeModal('editProjectModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Project</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal 7: Printable Receipt -->
+  <div class="modal-overlay" id="receiptModal">
+    <div class="modal-box" style="max-width: 440px;">
+      <button class="modal-close-btn no-print" onclick="closeModal('receiptModal')"><i data-lucide="x"></i></button>
+      
+      <div id="receiptModalContent" class="receipt-box">
+        <div class="receipt-header">
+          <div class="receipt-logo">Nexure Studios</div>
+          <div class="receipt-subtitle">Official Payment Receipt</div>
+        </div>
+        
+        <div class="receipt-row">
+          <span class="receipt-label">Receipt ID</span>
+          <span class="receipt-value" id="recId">PAY-0000</span>
+        </div>
+        <div class="receipt-row">
+          <span class="receipt-label">Timestamp</span>
+          <span class="receipt-value" id="recTimestamp">2026-06-26</span>
+        </div>
+        
+        <div class="receipt-divider"></div>
+        
+        <div class="receipt-row">
+          <span class="receipt-label">Customer Company</span>
+          <span class="receipt-value" id="recCustomer">Client Name</span>
+        </div>
+        <div class="receipt-row" style="flex-direction: column; align-items: flex-start; gap: 0.25rem;">
+          <span class="receipt-label">Consultation Detail</span>
+          <span class="receipt-value" id="recDescription" style="text-align: left; font-size: 0.85rem;">Description detail</span>
+        </div>
+        <div class="receipt-row">
+          <span class="receipt-label">UPI VPA Merchant</span>
+          <span class="receipt-value" style="font-size: 0.8rem; font-family: monospace;">vpadmasree86-2@okhdfcbank</span>
+        </div>
+        
+        <div class="receipt-divider"></div>
+        
+        <div class="receipt-total-row">
+          <span>Grand Total</span>
+          <span id="recAmount">₹0.00</span>
+        </div>
+        
+        <div class="receipt-status-alert" id="recStatusBadge">✓ Verified Paid via PhonePe</div>
+        
+        <div class="receipt-footer">
+          <p>Thank you for partnering with Nexure Studios.</p>
+          <p style="margin-top: 0.25rem; font-size: 0.65rem;">Nexure Studios Billing, Bangalore KA</p>
+        </div>
+      </div>
+      
+      <div class="modal-actions no-print">
+        <button class="btn btn-secondary" onclick="closeModal('receiptModal')">Close</button>
+        <button class="btn btn-primary" onclick="printReceipt()"><i data-lucide="printer"></i> Print Receipt</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ----------------------------------------------------
+     JAVASCRIPT SUITE LOGIC
+     ---------------------------------------------------- -->
+  <script>
+    // State variables
+    let activeLoginRole = "employee"; // 'employee' or 'owner'
+    let currentEmployee = null;
+    let currentOwner = null;
+
+    let liveTimerInterval = null;
+    let elapsedTimerInterval = null;
+    let activeSessionTimer = null;
+    let activeInvoiceId = null;
+
+    // Cache states
+    let cachedEmployees = [];
+    let cachedOwners = [];
+    let cachedProjects = [];
+    let attendanceLogs = [];
+    let cachedPayments = [];
+
+    // Subscriptions unsubscribes
+    let tasksUnsubscribe = null;
+    let attendanceUnsubscribe = null;
+    let statsEmployeesUnsub = null;
+    let statsProjectsUnsub = null;
+    let statsPaymentsUnsub = null;
+    let activeShiftsUnsub = null;
+    let employeesRosterUnsub = null;
+    let ownersRosterUnsub = null;
+    let projectsListUnsub = null;
+    let attendanceAuditUnsub = null;
+    let paymentsHistoryUnsub = null;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      startLiveClock();
+
+      // Check sessionStorage and route
+      checkAuthentication();
+      loadSavedDbConfig();
+
+      // Show DB status alert in login screen if local mode
+      const alertDiv = document.getElementById('loginFirebaseAlert');
+      if (alertDiv) {
+        if (window.NexureDB && window.NexureDB.getDbType() === "local") {
+          alertDiv.className = "fb-warning-banner";
+          alertDiv.style.backgroundColor = "rgba(94, 114, 228, 0.08)";
+          alertDiv.style.borderColor = "rgba(94, 114, 228, 0.2)";
+          alertDiv.style.color = "var(--primary)";
+          alertDiv.querySelector('i').setAttribute('data-lucide', 'info');
+          alertDiv.querySelector('span').textContent = "Running in Local Storage Mode.";
+          alertDiv.style.display = 'flex';
+          lucide.createIcons();
+        } else {
+          alertDiv.style.display = 'none';
+        }
+      }
+    });
+
+    // ----------------------------------------------------
+    // LOGIN PANEL LOGIC
+    // ----------------------------------------------------
+    function setLoginRole(role) {
+      activeLoginRole = role;
+      document.getElementById('btnRoleEmployee').classList.remove('active');
+      document.getElementById('btnRoleOwner').classList.remove('active');
+      document.getElementById('loginError').style.display = 'none';
+
+      const label = document.getElementById('labelLoginId');
+      const placeholder = document.getElementById('loginId');
+      const hint = document.getElementById('loginHintBox');
+      const icon = document.getElementById('iconLoginId');
+
+      if (role === 'employee') {
+        document.getElementById('btnRoleEmployee').classList.add('active');
+        label.textContent = "Employee ID";
+        placeholder.placeholder = "e.g. EMP-101";
+        icon.setAttribute('data-lucide', 'user');
+        hint.innerHTML = `
+          <strong>Default Employee Accounts:</strong><br>
+          ID: <code>EMP-101</code> / Pass: <code>karan</code><br>
+          ID: <code>EMP-102</code> / Pass: <code>aisha</code>
+        `;
+      } else {
+        document.getElementById('btnRoleOwner').classList.add('active');
+        label.textContent = "Owner Username";
+        placeholder.placeholder = "e.g. 9696";
+        icon.setAttribute('data-lucide', 'shield');
+        hint.innerHTML = `
+          <strong>Default Owner Credentials:</strong><br>
+          ID: <code>9696</code> / Pass: <code>9696</code>
+        `;
+      }
+      lucide.createIcons();
+    }
+
+    async function handleLoginSubmit(e) {
+      e.preventDefault();
+      if (!db) return;
+
+      const userVal = document.getElementById('loginId').value.trim();
+      const passVal = document.getElementById('loginPassword').value;
+      const errorDiv = document.getElementById('loginError');
+
+      try {
+        if (activeLoginRole === 'employee') {
+          // Employee Auth
+          const empDoc = await db.collection('employees').doc(userVal).get();
+          if (empDoc.exists && empDoc.data().password === passVal) {
+            const empData = empDoc.data();
+            sessionStorage.setItem('nexure_current_employee', JSON.stringify(empData));
+            errorDiv.style.display = 'none';
+            document.getElementById('loginForm').reset();
+            checkAuthentication();
+          } else {
+            errorDiv.style.display = 'block';
+            errorDiv.textContent = "Invalid Employee ID or Password.";
+          }
+        } else {
+          // Owner Auth
+          const ownerDoc = await db.collection('owners').doc(userVal).get();
+          if (ownerDoc.exists && ownerDoc.data().password === passVal) {
+            const ownerData = ownerDoc.data();
+            sessionStorage.setItem('nexure_current_owner', JSON.stringify(ownerData));
+            errorDiv.style.display = 'none';
+            document.getElementById('loginForm').reset();
+            checkAuthentication();
+          } else {
+            // Check fallback for default master seeder in case database is not populated yet
+            if (userVal === "9696" && passVal === "9696") {
+              const defaultOwner = { id: "9696", username: "9696", password: "9696", name: "Master Owner" };
+              sessionStorage.setItem('nexure_current_owner', JSON.stringify(defaultOwner));
+              errorDiv.style.display = 'none';
+              document.getElementById('loginForm').reset();
+              checkAuthentication();
+            } else {
+              errorDiv.style.display = 'block';
+              errorDiv.textContent = "Invalid Owner Credentials.";
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Login verification failure: ", err);
+        errorDiv.textContent = "Database error. Confirm connections.";
+        errorDiv.style.display = 'block';
+      }
+    }
+
+    // ----------------------------------------------------
+    // AUTH ROUTING & SCREEN INITIALIZATION
+    // ----------------------------------------------------
+    function checkAuthentication() {
+      const loggedOwner = sessionStorage.getItem('nexure_current_owner');
+      const loggedEmployee = sessionStorage.getItem('nexure_current_employee');
+
+      // Unsubscribe all active listeners first
+      unsubscribeAllListeners();
+
+      if (loggedOwner) {
+        currentOwner = JSON.parse(loggedOwner);
+        currentEmployee = null;
+
+        // Show Dashboard, Hide Login
+        document.getElementById('loginModule').style.display = 'none';
+        document.getElementById('portalWorkspace').style.display = 'flex';
+
+        // Setup UI Header
+        document.getElementById('activeBadgeRole').textContent = "Owner Console";
+        document.getElementById('navProfileName').textContent = currentOwner.name;
+        document.getElementById('navProfileRole').textContent = "Administrator";
+        document.getElementById('navProfileAvatar').src = `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(currentOwner.name)}`;
+
+        // Load Sidebar for Owner
+        loadOwnerSidebar();
+
+        // Load Owner Views
+        initializeOwnerDashboard();
+        
+      } else if (loggedEmployee) {
+        currentEmployee = JSON.parse(loggedEmployee);
+        currentOwner = null;
+
+        // Show Dashboard, Hide Login
+        document.getElementById('loginModule').style.display = 'none';
+        document.getElementById('portalWorkspace').style.display = 'flex';
+
+        // Setup UI Header
+        document.getElementById('activeBadgeRole').textContent = "Employee Portal";
+        document.getElementById('navProfileName').textContent = currentEmployee.name;
+        document.getElementById('navProfileRole').textContent = currentEmployee.role || "Developer";
+        document.getElementById('navProfileAvatar').src = currentEmployee.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(currentEmployee.name)}`;
+
+        // Load Sidebar for Employee
+        loadEmployeeSidebar();
+
+        // Show Employee tab
+        employeeSwitchTab('dashboard');
+
+      } else {
+        // Not logged in: show login screen
+        document.getElementById('loginModule').style.display = 'flex';
+        document.getElementById('portalWorkspace').style.display = 'none';
+        
+        currentEmployee = null;
+        currentOwner = null;
+        sessionStorage.clear();
+      }
+      lucide.createIcons();
+    }
+
+    function handleLogout() {
+      sessionStorage.clear();
+      currentEmployee = null;
+      currentOwner = null;
+
+      // Clean running intervals
+      clearInterval(elapsedTimerInterval);
+      clearInterval(activeSessionTimer);
+
+      checkAuthentication();
+    }
+
+    function unsubscribeAllListeners() {
+      if (tasksUnsubscribe) { tasksUnsubscribe(); tasksUnsubscribe = null; }
+      if (attendanceUnsubscribe) { attendanceUnsubscribe(); attendanceUnsubscribe = null; }
+      if (statsEmployeesUnsub) { statsEmployeesUnsub(); statsEmployeesUnsub = null; }
+      if (statsProjectsUnsub) { statsProjectsUnsub(); statsProjectsUnsub = null; }
+      if (statsPaymentsUnsub) { statsPaymentsUnsub(); statsPaymentsUnsub = null; }
+      if (activeShiftsUnsub) { activeShiftsUnsub(); activeShiftsUnsub = null; }
+      if (employeesRosterUnsub) { employeesRosterUnsub(); employeesRosterUnsub = null; }
+      if (ownersRosterUnsub) { ownersRosterUnsub(); ownersRosterUnsub = null; }
+      if (projectsListUnsub) { projectsListUnsub(); projectsListUnsub = null; }
+      if (attendanceAuditUnsub) { attendanceAuditUnsub(); attendanceAuditUnsub = null; }
+      if (paymentsHistoryUnsub) { paymentsHistoryUnsub(); paymentsHistoryUnsub = null; }
+    }
+
+    // ----------------------------------------------------
+    // SIDEBAR RENDERING
+    // ----------------------------------------------------
+    function loadEmployeeSidebar() {
+      const sidebar = document.getElementById('portalSidebar');
+      sidebar.innerHTML = `
+        <a class="sidebar-link active" id="link-emp-dashboard" onclick="employeeSwitchTab('dashboard')">
+          <i data-lucide="layout-dashboard"></i> Dashboard
+        </a>
+        <a class="sidebar-link" id="link-emp-tasks" onclick="employeeSwitchTab('tasks')">
+          <i data-lucide="check-square"></i> My Work Tasks
+        </a>
+        <a class="sidebar-link" id="link-emp-attendance" onclick="employeeSwitchTab('attendance')">
+          <i data-lucide="clock"></i> Attendance Log
+        </a>
+        <a class="sidebar-link" id="link-emp-profile" onclick="employeeSwitchTab('profile')">
+          <i data-lucide="user-cog"></i> Profile Settings
+        </a>
+      `;
+    }
+
+    function loadOwnerSidebar() {
+      const sidebar = document.getElementById('portalSidebar');
+      sidebar.innerHTML = `
+        <a class="sidebar-link active" id="link-owner-overview" onclick="ownerSwitchTab('overview')">
+          <i data-lucide="layout-dashboard"></i> Overview
+        </a>
+        <a class="sidebar-link" id="link-owner-employees" onclick="ownerSwitchTab('employees')">
+          <i data-lucide="users"></i> Employee Roster
+        </a>
+        <a class="sidebar-link" id="link-owner-owners" onclick="ownerSwitchTab('owners')">
+          <i data-lucide="user-cog"></i> Owners Registry
+        </a>
+        <a class="sidebar-link" id="link-owner-projects" onclick="ownerSwitchTab('projects')">
+          <i data-lucide="folder-kanban"></i> Project Planner
+        </a>
+        <a class="sidebar-link" id="link-owner-attendance" onclick="ownerSwitchTab('attendance')">
+          <i data-lucide="calendar-check"></i> Attendance Audit
+        </a>
+        <a class="sidebar-link" id="link-owner-payments" onclick="ownerSwitchTab('payments')">
+          <i data-lucide="wallet"></i> UPI Billing Desk
+        </a>
+        <a class="sidebar-link" id="link-owner-settings" onclick="ownerSwitchTab('settings')">
+          <i data-lucide="settings"></i> System Settings
+        </a>
+      `;
+    }
+
+    // Tab Switchers
+    function employeeSwitchTab(tabId) {
+      document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active'));
+      const activeLink = document.getElementById(`link-emp-${tabId}`);
+      if (activeLink) activeLink.classList.add('active');
+
+      document.querySelectorAll('.portal-tab-panel').forEach(panel => panel.classList.remove('active'));
+      document.getElementById(`tab-emp-${tabId}`).classList.add('active');
+
+      // Clean dynamic listeners
+      if (tasksUnsubscribe) { tasksUnsubscribe(); tasksUnsubscribe = null; }
+      if (attendanceUnsubscribe) { attendanceUnsubscribe(); attendanceUnsubscribe = null; }
+
+      if (tabId === 'dashboard') {
+        loadEmpDashboardStats();
+        checkEmpActiveClockIn();
+      } else if (tabId === 'tasks') {
+        loadEmpTasksList();
+      } else if (tabId === 'attendance') {
+        loadEmpAttendanceList();
+      } else if (tabId === 'profile') {
+        loadEmpProfileData();
+      }
+      lucide.createIcons();
+    }
+
+    function ownerSwitchTab(tabId) {
+      document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active'));
+      const activeLink = document.getElementById(`link-owner-${tabId}`);
+      if (activeLink) activeLink.classList.add('active');
+
+      document.querySelectorAll('.portal-tab-panel').forEach(panel => panel.classList.remove('active'));
+      document.getElementById(`tab-owner-${tabId}`).classList.add('active');
+
+      // Trigger respective loaders
+      if (tabId === 'settings') {
+        loadSavedDbConfig();
+      }
+      lucide.createIcons();
+    }
+
+    function ownerSwitchTabLink(tabId) {
+      const activeLink = document.getElementById(`link-owner-${tabId}`);
+      if (activeLink) ownerSwitchTab(tabId);
+    }
+
+    // Modal Helpers
+    function openModal(id) {
+      document.getElementById(id).classList.add('active');
+      lucide.createIcons();
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('active');
+    }
+
+
+    // ----------------------------------------------------
+    // EMPLOYEE CONSOLE SUITE LOGIC
+    // ----------------------------------------------------
+    function startLiveClock() {
+      const liveTime = document.getElementById('liveTime');
+      const liveDate = document.getElementById('liveDate');
+      const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+      
+      setInterval(() => {
+        const now = new Date();
+        if (liveTime) liveTime.textContent = now.toLocaleTimeString();
+        if (liveDate) liveDate.textContent = now.toLocaleDateString(undefined, options);
+      }, 1000);
+    }
+
+    async function loadEmpDashboardStats() {
+      if (!currentEmployee || !db) return;
+      try {
+        const projSnap = await db.collection('projects').where('assignedTo', '==', currentEmployee.id).get();
+        const empTasks = [];
+        projSnap.forEach(d => empTasks.push(d.data()));
+        
+        document.getElementById('empStatsTotalTasks').textContent = empTasks.length;
+        document.getElementById('empStatsCompletedTasks').textContent = empTasks.filter(t => t.status === 'Completed').length;
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function checkEmpActiveClockIn() {
+      if (!currentEmployee || !db) return;
+      try {
+        const activeDoc = await db.collection('active_sessions').doc(currentEmployee.id).get();
+        const statusBadge = document.getElementById('empStatusBadge');
+        const statusLabel = document.getElementById('empStatusLabel');
+        const clockInBtn = document.getElementById('empClockInBtn');
+        const clockOutBtn = document.getElementById('empClockOutBtn');
+        const timerBox = document.getElementById('empActiveSessionTimer');
+        
+        if (activeDoc.exists) {
+          const clockInTime = activeDoc.data().clockInTime;
+          statusBadge.className = "attendance-status-badge in";
+          statusLabel.textContent = "Clocked In";
+          clockInBtn.disabled = true;
+          clockOutBtn.disabled = false;
+          timerBox.style.display = 'block';
+          
+          startEmpElapsedSessionTimer(clockInTime);
+        } else {
+          statusBadge.className = "attendance-status-badge out";
+          statusLabel.textContent = "Clocked Out";
+          clockInBtn.disabled = false;
+          clockOutBtn.disabled = true;
+          timerBox.style.display = 'none';
+          
+          clearInterval(elapsedTimerInterval);
+          elapsedTimerInterval = null;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function handleEmpClockIn() {
+      if (!currentEmployee || !db) return;
+      const nowStr = new Date().toISOString();
+      try {
+        await db.collection('active_sessions').doc(currentEmployee.id).set({ clockInTime: nowStr });
+        checkEmpActiveClockIn();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function handleEmpClockOut() {
+      if (!currentEmployee || !db) return;
+      try {
+        const sessionDoc = await db.collection('active_sessions').doc(currentEmployee.id).get();
+        if (sessionDoc.exists) {
+          const checkinStamp = sessionDoc.data().clockInTime;
+          const checkoutDate = new Date();
+          const diffMs = checkoutDate - new Date(checkinStamp);
+          const hrs = Math.floor(diffMs / (1000 * 60 * 60));
+          const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+          
+          const logId = `ATT-${Date.now()}`;
+          await db.collection('attendance').doc(logId).set({
+            id: logId,
+            employeeId: currentEmployee.id,
+            name: currentEmployee.name,
+            date: checkoutDate.toLocaleDateString('en-CA'),
+            clockIn: checkinStamp,
+            clockOut: checkoutDate.toISOString(),
+            duration: `${hrs}h ${mins}m`
+          });
+
+          await db.collection('active_sessions').doc(currentEmployee.id).delete();
+          checkEmpActiveClockIn();
+          loadEmpDashboardStats();
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function startEmpElapsedSessionTimer(checkinTime) {
+      const checkinDate = new Date(checkinTime);
+      const elapsedSpan = document.getElementById('empElapsedTime');
+      
+      clearInterval(elapsedTimerInterval);
+      elapsedTimerInterval = setInterval(() => {
+        const diffMs = new Date() - checkinDate;
+        const hrs = Math.floor(diffMs / (1000 * 60 * 60));
+        const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+        const secs = Math.floor((diffMs % (1000 * 60)) / 1000);
+        
+        if (elapsedSpan) {
+          elapsedSpan.textContent = 
+            `${hrs.toString().padStart(2, '0')}h ` +
+            `${mins.toString().padStart(2, '0')}m ` +
+            `${secs.toString().padStart(2, '0')}s`;
+        }
+      }, 1000);
+    }
+
+    function loadEmpTasksList() {
+      if (!currentEmployee || !db) return;
+      const container = document.getElementById('empTaskListContainer');
+      
+      tasksUnsubscribe = db.collection('projects')
+        .where('assignedTo', '==', currentEmployee.id)
+        .onSnapshot(snap => {
+          if (snap.empty) {
+            container.innerHTML = `
+              <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+                <i data-lucide="inbox" style="width: 32px; height: 32px; margin-bottom: 0.5rem;"></i>
+                <p>No projects or tasks assigned currently.</p>
+              </div>
+            `;
+            lucide.createIcons();
+            return;
+          }
+          
+          let html = '';
+          snap.forEach(doc => {
+            const task = doc.data();
+            let badgeClass = 'pending';
+            if (task.status === 'In Progress') badgeClass = 'progress';
+            else if (task.status === 'Completed') badgeClass = 'completed';
+
+            html += `
+              <div class="task-item-card">
+                <div class="task-details">
+                  <div class="task-header-row">
+                    <h4 class="task-name">${task.name}</h4>
+                    <span class="badge-status ${badgeClass}">${task.status}</span>
+                  </div>
+                  <p class="task-desc">${task.description || 'No directives.'}</p>
+                  <div class="task-meta">
+                    <span><i data-lucide="calendar"></i> Deadline: ${task.deadline}</span>
+                    <span><i data-lucide="bookmark"></i> ID: ${task.id}</span>
+                  </div>
+                </div>
+                <div class="task-actions-select">
+                  <label for="status-${task.id}">Status</label>
+                  <select id="status-${task.id}" class="task-select-input" onchange="updateEmpTaskStatus('${task.id}', this.value)">
+                    <option value="Pending" ${task.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                    <option value="In Progress" ${task.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                    <option value="Completed" ${task.status === 'Completed' ? 'selected' : ''}>Completed</option>
+                  </select>
+                </div>
+              </div>
+            `;
+          });
+          container.innerHTML = html;
+          lucide.createIcons();
+        });
+    }
+
+    async function updateEmpTaskStatus(taskId, status) {
+      if (!db) return;
+      try {
+        await db.collection('projects').doc(taskId).update({ status });
+        loadEmpDashboardStats();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function loadEmpAttendanceList() {
+      if (!currentEmployee || !db) return;
+      const tbody = document.getElementById('empAttendanceTableBody');
+      
+      attendanceUnsubscribe = db.collection('attendance')
+        .where('employeeId', '==', currentEmployee.id)
+        .onSnapshot(snap => {
+          if (snap.empty) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align: center; color: var(--text-muted);">No logs logged yet.</td></tr>';
+            return;
+          }
+          const logs = [];
+          snap.forEach(d => logs.push(d.data()));
+          logs.sort((a,b) => new Date(b.clockIn) - new Date(a.clockIn));
+
+          let html = '';
+          logs.forEach(log => {
+            html += `
+              <tr>
+                <td><strong>${log.date}</strong></td>
+                <td>${new Date(log.clockIn).toLocaleTimeString()}</td>
+                <td>${log.clockOut ? new Date(log.clockOut).toLocaleTimeString() : 'Running'}</td>
+                <td>${log.duration || 'Running'}</td>
+              </tr>
+            `;
+          });
+          tbody.innerHTML = html;
+        });
+    }
+
+    function loadEmpProfileData() {
+      if (!currentEmployee) return;
+      document.getElementById('empProfileFieldId').value = currentEmployee.id;
+      document.getElementById('empProfileFieldName').value = currentEmployee.name;
+      document.getElementById('empProfileFieldEmail').value = currentEmployee.email;
+      document.getElementById('empProfileFieldPhone').value = currentEmployee.phone || '';
+      document.getElementById('empProfileFieldPassword').value = currentEmployee.password;
+    }
+
+    async function handleEmpProfileUpdate(e) {
+      e.preventDefault();
+      if (!currentEmployee || !db) return;
+
+      const name = document.getElementById('empProfileFieldName').value.trim();
+      const email = document.getElementById('empProfileFieldEmail').value.trim();
+      const phone = document.getElementById('empProfileFieldPhone').value.trim();
+      const password = document.getElementById('empProfileFieldPassword').value;
+
+      try {
+        const docRef = db.collection('employees').doc(currentEmployee.id);
+        await docRef.update({ name, email, phone, password });
+        
+        const updatedDoc = await docRef.get();
+        currentEmployee = updatedDoc.data();
+        sessionStorage.setItem('nexure_current_employee', JSON.stringify(currentEmployee));
+        
+        // Sync UI Header details
+        checkAuthentication();
+
+        const alertDiv = document.getElementById('empProfileSuccessAlert');
+        alertDiv.style.display = 'block';
+        setTimeout(() => alertDiv.style.display = 'none', 4000);
+      } catch (err) {
+        console.error(err);
+        alert("Failed to save changes.");
+      }
+    }
+
+
+    // ----------------------------------------------------
+    // OWNER CONSOLE SUITE LOGIC
+    // ----------------------------------------------------
+    function initializeOwnerDashboard() {
+      if (!db) return;
+
+      // Overview Stats
+      statsEmployeesUnsub = db.collection('employees').onSnapshot(snap => {
+        document.getElementById('ownerStatsEmployees').textContent = snap.size;
+      });
+
+      statsProjectsUnsub = db.collection('projects').onSnapshot(snap => {
+        document.getElementById('ownerStatsProjects').textContent = snap.size;
+      });
+
+      statsPaymentsUnsub = db.collection('payments').where('status', '==', 'Success').onSnapshot(snap => {
+        let sum = 0;
+        snap.forEach(d => sum += parseInt(d.data().amount || 0));
+        document.getElementById('ownerStatsRevenue').textContent = `₹${sum.toLocaleString('en-IN')}`;
+      });
+
+      // Active Shifts feed
+      initializeActiveShiftsFeed();
+
+      // Roster tables
+      initializeEmployeesRoster();
+      initializeOwnersRoster();
+      initializeProjectsList();
+      initializeAttendanceAudit();
+      initializePaymentsHistory();
+    }
+
+    function initializeActiveShiftsFeed() {
+      const feed = document.getElementById('ownerActiveShiftsFeed');
+      
+      activeShiftsUnsub = db.collection('active_sessions').onSnapshot(async snap => {
+        if (snap.empty) {
+          feed.innerHTML = `
+            <div style="text-align: center; padding: 2rem; color: var(--text-muted);">
+              <i data-lucide="moon" style="width: 24px; height: 24px; margin-bottom: 0.5rem;"></i>
+              <p>No active developer shifts offline.</p>
+            </div>
+          `;
+          lucide.createIcons();
+          return;
+        }
+
+        const employeesSnap = await db.collection('employees').get();
+        const empMap = {};
+        employeesSnap.forEach(d => empMap[d.id] = d.data());
+
+        let html = '';
+        snap.forEach(doc => {
+          const sess = doc.data();
+          const empId = doc.id;
+          const emp = empMap[empId] || { name: 'Unknown', avatar: '' };
+          const avatarUrl = emp.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${emp.name}`;
+          
+          html += `
+            <div class="shift-feed-item" data-checkin="${sess.clockInTime}">
+              <div class="shift-user-details">
+                <img class="shift-user-avatar" src="${avatarUrl}" alt="Avatar">
+                <div>
+                  <div class="shift-user-name">${emp.name}</div>
+                  <div class="shift-user-id">${empId} • ${emp.role || 'Developer'}</div>
+                </div>
+              </div>
+              <div class="shift-duration-badge">
+                <span class="shift-time" id="active-shift-${empId}">Running...</span>
+                <span class="shift-start">In: ${new Date(sess.clockInTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+              </div>
+            </div>
+          `;
+        });
+        feed.innerHTML = html;
+        lucide.createIcons();
+
+        // Refresh dynamic times
+        calculateActiveFeedTimes();
+      });
+
+      clearInterval(activeSessionTimer);
+      activeSessionTimer = setInterval(calculateActiveFeedTimes, 1000);
+    }
+
+    function calculateActiveFeedTimes() {
+      document.querySelectorAll('#ownerActiveShiftsFeed .shift-feed-item').forEach(item => {
+        const stamp = item.getAttribute('data-checkin');
+        const durationSpan = item.querySelector('.shift-time');
+        if (!stamp || !durationSpan) return;
+
+        const diffMs = new Date() - new Date(stamp);
+        const hrs = Math.floor(diffMs / (1000 * 60 * 60));
+        const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+        const secs = Math.floor((diffMs % (1000 * 60)) / 1000);
+
+        durationSpan.textContent = 
+          `${hrs.toString().padStart(2, '0')}h ` +
+          `${mins.toString().padStart(2, '0')}m ` +
+          `${secs.toString().padStart(2, '0')}s`;
+      });
+    }
+
+    // ----------------------------------------------------
+    // EMPLOYEE CRUD REGISTRY LOGIC
+    // ----------------------------------------------------
+    function initializeEmployeesRoster() {
+      const tbody = document.getElementById('ownerEmployeesTableBody');
+      const addAssignedDropdown = document.getElementById('addProjAssigned');
+      const editAssignedDropdown = document.getElementById('editProjAssigned');
+
+      employeesRosterUnsub = db.collection('employees').onSnapshot(snap => {
+        cachedEmployees = [];
+        tbody.innerHTML = '';
+        
+        let dropdownHtml = '<option value="">-- Choose Developer --</option>';
+        if (snap.empty) {
+          tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted);">No employees registered yet.</td></tr>';
+          addAssignedDropdown.innerHTML = dropdownHtml;
+          editAssignedDropdown.innerHTML = dropdownHtml;
+          return;
+        }
+
+        snap.forEach(doc => {
+          const emp = doc.data();
+          cachedEmployees.push(emp);
+          dropdownHtml += `<option value="${emp.id}">${emp.name} (${emp.id})</option>`;
+          
+          const avatarUrl = emp.avatar || `https://api.dicebear.com/7.x/adventurer/svg?seed=${emp.name}`;
+          
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><img src="${avatarUrl}" alt="Avatar" style="width: 32px; height: 32px; border-radius: 50%;"></td>
+            <td><strong>${emp.id}</strong></td>
+            <td>${emp.name}</td>
+            <td>${emp.role || 'Developer'}</td>
+            <td>${emp.email}</td>
+            <td>${emp.phone || '-'}</td>
+            <td><code>${emp.password}</code></td>
+            <td>
+              <div class="action-btn-group">
+                <button class="action-icon-btn edit-btn" onclick="openEditEmployeeModal('${emp.id}')" title="Edit Profile">
+                  <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
+                </button>
+                <button class="action-icon-btn delete-btn" onclick="deleteEmployee('${emp.id}')" title="Delete Profile">
+                  <i data-lucide="trash" style="width: 14px; height: 14px;"></i>
+                </button>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+        
+        addAssignedDropdown.innerHTML = dropdownHtml;
+        editAssignedDropdown.innerHTML = dropdownHtml;
+        lucide.createIcons();
+      });
+    }
+
+    function openAddEmployeeModal() {
+      document.getElementById('addEmployeeForm').reset();
+      openModal('addEmployeeModal');
+    }
+
+    async function handleAddEmployee(e) {
+      e.preventDefault();
+      if (!db) return;
+
+      const id = document.getElementById('addEmpId').value.trim();
+      const name = document.getElementById('addEmpName').value.trim();
+      const role = document.getElementById('addEmpRole').value.trim();
+      const email = document.getElementById('addEmpEmail').value.trim();
+      const phone = document.getElementById('addEmpPhone').value.trim();
+      const password = document.getElementById('addEmpPassword').value;
+      const avatar = `https://api.dicebear.com/7.x/adventurer/svg?seed=${encodeURIComponent(name)}`;
+
+      try {
+        const testDoc = await db.collection('employees').doc(id).get();
+        if (testDoc.exists) {
+          alert("Error: Employee ID already registered.");
+          return;
+        }
+        await db.collection('employees').doc(id).set({ id, name, role, email, phone, password, avatar });
+        closeModal('addEmployeeModal');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function openEditEmployeeModal(empId) {
+      const emp = cachedEmployees.find(e => e.id === empId);
+      if (!emp) return;
+
+      document.getElementById('editEmpId').value = emp.id;
+      document.getElementById('editEmpName').value = emp.name;
+      document.getElementById('editEmpRole').value = emp.role;
+      document.getElementById('editEmpEmail').value = emp.email;
+      document.getElementById('editEmpPhone').value = emp.phone || '';
+      document.getElementById('editEmpPassword').value = emp.password;
+
+      openModal('editEmployeeModal');
+    }
+
+    async function handleEditEmployee(e) {
+      e.preventDefault();
+      if (!db) return;
+
+      const id = document.getElementById('editEmpId').value;
+      const name = document.getElementById('editEmpName').value.trim();
+      const role = document.getElementById('editEmpRole').value.trim();
+      const email = document.getElementById('editEmpEmail').value.trim();
+      const phone = document.getElementById('editEmpPhone').value.trim();
+      const password = document.getElementById('editEmpPassword').value;
+
+      try {
+        await db.collection('employees').doc(id).update({ name, role, email, phone, password });
+        closeModal('editEmployeeModal');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function deleteEmployee(empId) {
+      if (!db) return;
+      if (!confirm(`Are you sure you want to remove Employee ${empId}?`)) return;
+      try {
+        await db.collection('employees').doc(empId).delete();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+
+    // ----------------------------------------------------
+    // OWNER CRUD REGISTRY LOGIC [NEW]
+    // ----------------------------------------------------
+    function initializeOwnersRoster() {
+      const tbody = document.getElementById('ownerOwnersTableBody');
+
+      ownersRosterUnsub = db.collection('owners').onSnapshot(snap => {
+        cachedOwners = [];
+        tbody.innerHTML = '';
+        
+        if (snap.empty) {
+          // If empty, draw default seed since it's hardcoded as fallback but should be visible
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><strong>9696</strong></td>
+            <td>Master Owner</td>
+            <td><span class="badge-status completed">Primary Master</span></td>
+            <td><code>9696</code></td>
+            <td>-</td>
+          `;
+          tbody.appendChild(tr);
+          return;
+        }
+
+        snap.forEach(doc => {
+          const owner = doc.data();
+          cachedOwners.push(owner);
+          
+          const isMaster = owner.id === "9696";
+          
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><strong>${owner.id}</strong></td>
+            <td>${owner.name}</td>
+            <td><span class="badge-status ${isMaster ? 'completed' : 'progress'}">${isMaster ? 'Primary Master' : 'Co-Owner'}</span></td>
+            <td><code>${owner.password}</code></td>
+            <td>
+              <div class="action-btn-group">
+                <button class="action-icon-btn edit-btn" onclick="openEditOwnerModal('${owner.id}')" title="Edit Owner">
+                  <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
+                </button>
+                ${isMaster ? '' : `
+                <button class="action-icon-btn delete-btn" onclick="deleteOwner('${owner.id}')" title="Delete Owner">
+                  <i data-lucide="trash" style="width: 14px; height: 14px;"></i>
+                </button>`}
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+        lucide.createIcons();
+      });
+    }
+
+    function openAddOwnerModal() {
+      document.getElementById('addOwnerForm').reset();
+      openModal('addOwnerModal');
+    }
+
+    async function handleAddOwner(e) {
+      e.preventDefault();
+      if (!db) return;
+
+      const id = document.getElementById('addOwnerId').value.trim();
+      const name = document.getElementById('addOwnerName').value.trim();
+      const password = document.getElementById('addOwnerPassword').value;
+
+      try {
+        const testDoc = await db.collection('owners').doc(id).get();
+        if (testDoc.exists || id === "9696") {
+          alert("Error: Owner ID / Username already registered.");
+          return;
+        }
+        await db.collection('owners').doc(id).set({ id, username: id, name, password });
+        closeModal('addOwnerModal');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function openEditOwnerModal(ownerId) {
+      const owner = cachedOwners.find(o => o.id === ownerId);
+      // Fallback for default master owner if not in DB doc yet
+      if (!owner && ownerId === "9696") {
+        document.getElementById('editOwnerId').value = "9696";
+        document.getElementById('editOwnerName').value = "Master Owner";
+        document.getElementById('editOwnerPassword').value = "9696";
+        openModal('editOwnerModal');
+        return;
+      }
+      
+      if (!owner) return;
+
+      document.getElementById('editOwnerId').value = owner.id;
+      document.getElementById('editOwnerName').value = owner.name;
+      document.getElementById('editOwnerPassword').value = owner.password;
+
+      openModal('editOwnerModal');
+    }
+
+    async function handleEditOwner(e) {
+      e.preventDefault();
+      if (!db) return;
+
+      const id = document.getElementById('editOwnerId').value;
+      const name = document.getElementById('editOwnerName').value.trim();
+      const password = document.getElementById('editOwnerPassword').value;
+
+      try {
+        await db.collection('owners').doc(id).set({ id, username: id, name, password });
+        closeModal('editOwnerModal');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function deleteOwner(ownerId) {
+      if (!db) return;
+      if (ownerId === "9696") {
+        alert("Cannot delete the primary master Owner.");
+        return;
+      }
+      if (!confirm(`Are you sure you want to remove Owner account ${ownerId}?`)) return;
+      try {
+        await db.collection('owners').doc(ownerId).delete();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+
+    // ----------------------------------------------------
+    // PROJECT BOARD CRUD LOGIC
+    // ----------------------------------------------------
+    function initializeProjectsList() {
+      const tbody = document.getElementById('ownerProjectsTableBody');
+      
+      projectsListUnsub = db.collection('projects').onSnapshot(async snap => {
+        cachedProjects = [];
+        tbody.innerHTML = '';
+        
+        if (snap.empty) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No projects deployed.</td></tr>';
+          return;
+        }
+
+        const employeesSnap = await db.collection('employees').get();
+        const empMap = {};
+        employeesSnap.forEach(d => { empMap[d.id] = d.data(); });
+
+        snap.forEach(doc => {
+          const proj = doc.data();
+          cachedProjects.push(proj);
+          
+          const dev = empMap[proj.assignedTo] || { name: `Deleted Developer (${proj.assignedTo})` };
+          
+          let badgeClass = 'pending';
+          if (proj.status === 'In Progress') badgeClass = 'progress';
+          else if (proj.status === 'Completed') badgeClass = 'completed';
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><strong>${proj.id}</strong></td>
+            <td>${proj.name}</td>
+            <td style="max-width: 250px; font-size: 0.85rem; color: var(--text-muted);">${proj.description}</td>
+            <td><strong>${dev.name}</strong> <span style="font-size:0.75rem; color:var(--text-light);">(${proj.assignedTo})</span></td>
+            <td><code>${proj.deadline}</code></td>
+            <td><span class="badge-status ${badgeClass}">${proj.status}</span></td>
+            <td>
+              <div class="action-btn-group">
+                <button class="action-icon-btn edit-btn" onclick="openEditProjectModal('${proj.id}')" title="Edit board">
+                  <i data-lucide="edit-3" style="width: 14px; height: 14px;"></i>
+                </button>
+                <button class="action-icon-btn delete-btn" onclick="deleteProject('${proj.id}')" title="Delete board">
+                  <i data-lucide="trash" style="width: 14px; height: 14px;"></i>
+                </button>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+        lucide.createIcons();
+      });
+    }
+
+    function openAddProjectModal() {
+      document.getElementById('addProjectForm').reset();
+      openModal('addProjectModal');
+    }
+
+    async function handleAddProject(e) {
+      e.preventDefault();
+      if (!db) return;
+
+      const id = document.getElementById('addProjId').value.trim();
+      const name = document.getElementById('addProjName').value.trim();
+      const description = document.getElementById('addProjDesc').value.trim();
+      const assignedTo = document.getElementById('addProjAssigned').value;
+      const deadline = document.getElementById('addProjDeadline').value;
+      const status = document.getElementById('addProjStatus').value;
+
+      try {
+        const testDoc = await db.collection('projects').doc(id).get();
+        if (testDoc.exists) {
+          alert("Error: Project ID already registered.");
+          return;
+        }
+        await db.collection('projects').doc(id).set({ id, name, description, assignedTo, deadline, status });
+        closeModal('addProjectModal');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function openEditProjectModal(projId) {
+      const proj = cachedProjects.find(p => p.id === projId);
+      if (!proj) return;
+
+      document.getElementById('editProjId').value = proj.id;
+      document.getElementById('editProjName').value = proj.name;
+      document.getElementById('editProjDesc').value = proj.description;
+      document.getElementById('editProjAssigned').value = proj.assignedTo;
+      document.getElementById('editProjDeadline').value = proj.deadline;
+      document.getElementById('editProjStatus').value = proj.status;
+
+      openModal('editProjectModal');
+    }
+
+    async function handleEditProject(e) {
+      e.preventDefault();
+      if (!db) return;
+
+      const id = document.getElementById('editProjId').value;
+      const name = document.getElementById('editProjName').value.trim();
+      const description = document.getElementById('editProjDesc').value.trim();
+      const assignedTo = document.getElementById('editProjAssigned').value;
+      const deadline = document.getElementById('editProjDeadline').value;
+      const status = document.getElementById('editProjStatus').value;
+
+      try {
+        await db.collection('projects').doc(id).update({ name, description, assignedTo, deadline, status });
+        closeModal('editProjectModal');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function deleteProject(projId) {
+      if (!db) return;
+      if (!confirm(`Are you sure you want to delete project ${projId}?`)) return;
+      try {
+        await db.collection('projects').doc(projId).delete();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+
+    // ----------------------------------------------------
+    // ATTENDANCE AUDIT LOGS LOGIC
+    // ----------------------------------------------------
+    function initializeAttendanceAudit() {
+      const tbody = document.getElementById('ownerAttendanceTableBody');
+      
+      attendanceAuditUnsub = db.collection('attendance').onSnapshot(snap => {
+        attendanceLogs = [];
+        if (snap.empty) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No logs found.</td></tr>';
+          return;
+        }
+
+        snap.forEach(doc => attendanceLogs.push(doc.data()));
+        attendanceLogs.sort((a, b) => new Date(b.clockIn) - new Date(a.clockIn));
+        
+        renderAttendanceAuditTable(attendanceLogs);
+      });
+    }
+
+    function renderAttendanceAuditTable(logs) {
+      const tbody = document.getElementById('ownerAttendanceTableBody');
+      tbody.innerHTML = '';
+
+      if (logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No matching audit logs.</td></tr>';
+        return;
+      }
+
+      logs.forEach(log => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><code>${log.id}</code></td>
+          <td><strong>${log.name}</strong> <span style="font-size:0.75rem; color:var(--text-light);">(${log.employeeId})</span></td>
+          <td>${log.date}</td>
+          <td>${new Date(log.clockIn).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'})}</td>
+          <td>${log.clockOut ? new Date(log.clockOut).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit', second:'2-digit'}) : 'Running'}</td>
+          <td>${log.duration || 'Running'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function filterAuditLogs() {
+      const nameVal = document.getElementById('auditSearchName').value.toLowerCase().trim();
+      const dateVal = document.getElementById('auditSearchDate').value;
+
+      const filtered = attendanceLogs.filter(log => {
+        const matchesName = log.name.toLowerCase().includes(nameVal) || log.employeeId.toLowerCase().includes(nameVal);
+        const matchesDate = !dateVal || log.date === dateVal;
+        return matchesName && matchesDate;
+      });
+      renderAttendanceAuditTable(filtered);
+    }
+
+    function clearAuditFilters() {
+      document.getElementById('auditSearchName').value = '';
+      document.getElementById('auditSearchDate').value = '';
+      renderAttendanceAuditTable(attendanceLogs);
+    }
+
+
+    // ----------------------------------------------------
+    // UPI INVOICING & RECEIPTS LOGIC
+    // ----------------------------------------------------
+    function initializePaymentsHistory() {
+      const tbody = document.getElementById('ownerPaymentsTableBody');
+      
+      paymentsHistoryUnsub = db.collection('payments').onSnapshot(snap => {
+        cachedPayments = [];
+        tbody.innerHTML = '';
+        
+        if (snap.empty) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No receipts logged.</td></tr>';
+          return;
+        }
+
+        snap.forEach(doc => cachedPayments.push(doc.data()));
+        cachedPayments.sort((a,b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        cachedPayments.forEach(pay => {
+          const dateStr = new Date(pay.timestamp).toLocaleDateString();
+          const badgeClass = pay.status === 'Success' ? 'completed' : 'pending';
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><code>${pay.id}</code></td>
+            <td><strong>${pay.customerName}</strong></td>
+            <td style="max-width: 200px; font-size: 0.85rem; color: var(--text-muted);">${pay.description}</td>
+            <td><strong>₹${parseInt(pay.amount).toLocaleString('en-IN')}</strong></td>
+            <td>${dateStr}</td>
+            <td><span class="badge-status ${badgeClass}">${pay.status}</span></td>
+            <td>
+              <button class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.8rem; width: auto;" onclick="openReceiptModal('${pay.id}')">
+                <i data-lucide="receipt" style="width: 12px; height: 12px;"></i> View Receipt
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+        lucide.createIcons();
+      });
+    }
+
+    async function handleGenerateInvoice(e) {
+      e.preventDefault();
+      if (!db) return;
+
+      const customerName = document.getElementById('billCust').value.trim();
+      const description = document.getElementById('billDesc').value.trim();
+      const amount = document.getElementById('billAmt').value;
+      
+      const logId = `PAY-${Date.now()}`;
+      const upiString = `upi://pay?pa=vpadmasree86-2@okhdfcbank&pn=Nexure%20Studios&am=${amount}&cu=INR`;
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(upiString)}`;
+
+      try {
+        await db.collection('payments').doc(logId).set({
+          id: logId,
+          customerName,
+          description,
+          amount,
+          upiString,
+          timestamp: new Date().toISOString(),
+          status: 'Pending'
+        });
+
+        activeInvoiceId = logId;
+        
+        document.getElementById('ownerQRClient').textContent = customerName;
+        document.getElementById('ownerQRDesc').textContent = description;
+        document.getElementById('ownerQRAmount').textContent = `₹${parseInt(amount).toLocaleString('en-IN')}.00`;
+        document.getElementById('ownerQRImg').src = qrUrl;
+
+        document.getElementById('ownerInvoicePlaceholder').style.display = 'none';
+        document.getElementById('ownerInvoiceDesk').style.display = 'flex';
+        
+        document.getElementById('ownerInvoiceForm').reset();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function confirmActiveInvoiceSuccess() {
+      if (!activeInvoiceId || !db) return;
+      try {
+        await db.collection('payments').doc(activeInvoiceId).update({ status: 'Success' });
+        alert("Payment flagged Success!");
+        cancelActiveInvoice();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function cancelActiveInvoice() {
+      activeInvoiceId = null;
+      document.getElementById('ownerInvoiceDesk').style.display = 'none';
+      document.getElementById('ownerInvoicePlaceholder').style.display = 'flex';
+    }
+
+    function openReceiptModal(paymentId) {
+      const pay = cachedPayments.find(p => p.id === paymentId);
+      if (!pay) return;
+
+      document.getElementById('recId').textContent = pay.id;
+      document.getElementById('recTimestamp').textContent = new Date(pay.timestamp).toLocaleString();
+      document.getElementById('recCustomer').textContent = pay.customerName;
+      document.getElementById('recDescription').textContent = pay.description;
+      document.getElementById('recAmount').textContent = `₹${parseInt(pay.amount).toLocaleString('en-IN')}.00`;
+
+      const badge = document.getElementById('recStatusBadge');
+      if (pay.status === 'Success') {
+        badge.className = "receipt-status-alert success";
+        badge.textContent = "✓ Paid via PhonePe UPI";
+      } else {
+        badge.className = "receipt-status-alert pending";
+        badge.textContent = "⚠ Payment Transaction Pending";
+      }
+
+      openModal('receiptModal');
+    }
+
+    function printReceipt() {
+      window.print();
+    }
+
+
+    // ----------------------------------------------------
+    // SYSTEM SETTINGS & FACTORY WIPES
+    // ----------------------------------------------------
+    async function triggerDatabaseReset() {
+      if (!db) return;
+      if (!confirm("WARNING: Wipe all documents and reset defaults?")) return;
+
+      try {
+        await deleteCollection('employees');
+        await deleteCollection('projects');
+        await deleteCollection('attendance');
+        await deleteCollection('payments');
+        await deleteCollection('active_sessions');
+        await deleteCollection('owners');
+
+        alert("Database wiped successfully. Reloading...");
+        sessionStorage.clear();
+        
+        // Re-seed DB defaults
+        if (window.NexureDB) {
+          window.NexureDB.resetToFactoryDefaults();
+        }
+        window.location.reload();
+      } catch (err) {
+        console.error("Wipe failed: ", err);
+      }
+    }
+
+    async function deleteCollection(collectionName) {
+      const snap = await db.collection(collectionName).get();
+      if (snap.empty) return;
+      const batch = db.batch();
+      snap.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+    }
+
+
+    // ----------------------------------------------------
+    // CLOUD DATABASE SETTINGS WIDGET FUNCTIONS
+    // ----------------------------------------------------
+    function loadSavedDbConfig() {
+      if (!window.NexureDB) return;
+      const type = window.NexureDB.getDbType();
+      const indicator = document.getElementById('dbTypeIndicator');
+      const select = document.getElementById('dbSetupType');
+      const clearBtn = document.getElementById('clearDbBtn');
+      const fieldsDiv = document.getElementById('firebaseConfigFields');
+      
+      if (!indicator || !select || !clearBtn || !fieldsDiv) return;
+
+      if (type === 'firebase') {
+        indicator.textContent = "Firebase Firestore Cloud";
+        indicator.style.color = "var(--success)";
+        select.value = "firebase";
+        clearBtn.style.display = "inline-block";
+        fieldsDiv.style.display = "block";
+        
+        const cfg = window.NexureDB.getConfig();
+        if (cfg && cfg.config) {
+          document.getElementById('dbApiKey').value = cfg.config.apiKey || '';
+          document.getElementById('dbAuthDomain').value = cfg.config.authDomain || '';
+          document.getElementById('dbProjectId').value = cfg.config.projectId || '';
+          document.getElementById('dbStorageBucket').value = cfg.config.storageBucket || '';
+          document.getElementById('dbMessagingSenderId').value = cfg.config.messagingSenderId || '';
+          document.getElementById('dbAppId').value = cfg.config.appId || '';
+        }
+      } else {
+        indicator.textContent = "Local Storage Mode (Browser Cache)";
+        indicator.style.color = "var(--warning)";
+        select.value = "local";
+        clearBtn.style.display = "none";
+        fieldsDiv.style.display = "none";
+      }
+    }
+
+    function toggleDbFields(val) {
+      const fieldsDiv = document.getElementById('firebaseConfigFields');
+      if (!fieldsDiv) return;
+      if (val === 'firebase') {
+        fieldsDiv.style.display = 'block';
+      } else {
+        fieldsDiv.style.display = 'none';
+      }
+    }
+
+    function handleDbSetup(e) {
+      e.preventDefault();
+      const type = document.getElementById('dbSetupType').value;
+      
+      if (type === 'local') {
+        window.NexureDB.saveConfig('local');
+        return;
+      }
+      
+      const apiKey = document.getElementById('dbApiKey').value.trim();
+      const authDomain = document.getElementById('dbAuthDomain').value.trim();
+      const projectId = document.getElementById('dbProjectId').value.trim();
+      const storageBucket = document.getElementById('dbStorageBucket').value.trim();
+      const messagingSenderId = document.getElementById('dbMessagingSenderId').value.trim();
+      const appId = document.getElementById('dbAppId').value.trim();
+      
+      if (!apiKey || !projectId) {
+        alert("API Key and Project ID are required for Firebase connection.");
+        return;
+      }
+      
+      const config = { apiKey, authDomain, projectId, storageBucket, messagingSenderId, appId };
+      window.NexureDB.saveConfig('firebase', config);
+    }
+
+    function clearDbSetup() {
+      if (confirm("Disconnect cloud Firebase database?")) {
+        window.NexureDB.clearConfig();
+      }
+    }
+  </script>
+</body>
+</html>
